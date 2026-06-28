@@ -291,6 +291,12 @@
     min-height: 43px;
 }
 
+.ofqb-line-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 12px;
+}
+
 .ofqb-remove-button {
     background: #cc1f1a;
     border: 0;
@@ -591,7 +597,15 @@
 }
 
 .ofqb-preview-table tbody tr:nth-child(even) {
+    background: transparent;
+}
+
+.ofqb-preview-table tbody tr:nth-child(even) td {
     background: #f4f6f8;
+}
+
+.ofqb-preview-table tbody td:first-child {
+    border-left: 0 !important;
 }
 
 .ofqb-preview-table th:nth-child(2),
@@ -695,36 +709,38 @@
     align-items: center;
     background: var(--ofqb-blue);
     display: grid;
-    gap: 20px;
+    gap: 14px;
     grid-template-columns: 1fr 1fr 1fr;
     margin-top: auto;
-    min-height: 54px;
-    padding: 9px 34px;
+    min-height: 46px;
+    padding: 7px 30px;
 }
 
 .ofqb-preview-footer a {
     align-items: center;
     color: #fff !important;
     display: inline-flex;
-    gap: 8px;
-    line-height: 1.15;
+    gap: 6px;
+    line-height: 1.05;
     text-decoration: none !important;
 }
 
 .ofqb-preview-footer img {
     flex: 0 0 auto;
-    height: 24px;
-    width: 24px;
+    height: 18px;
+    width: 18px;
 }
 
 .ofqb-preview-footer strong {
     color: var(--ofqb-green);
     display: block;
-    font-size: 11px;
+    font-size: 9px;
+    line-height: 1;
 }
 
 .ofqb-preview-footer span {
-    font-size: 11px;
+    font-size: 9px;
+    line-height: 1.08;
 }
 
 .ofqb-footer-brand {
@@ -736,7 +752,7 @@
 .ofqb-footer-brand strong,
 .ofqb-footer-brand span {
     display: block;
-    font-size: 16px;
+    font-size: 13px;
     font-weight: 900;
 }
 
@@ -901,5 +917,47 @@
     .ofqb-quote-table td::before {
         content: attr(data-label);
         font-weight: 800;
+    }
+}
+
+@media print {
+    @page {
+        margin: 0.25in;
+        size: letter;
+    }
+
+    body * {
+        visibility: hidden !important;
+    }
+
+    .ofqb-preview-wrap,
+    .ofqb-preview-wrap *,
+    .ofqb-quote-preview,
+    .ofqb-quote-preview * {
+        visibility: visible !important;
+    }
+
+    .ofqb-preview-wrap {
+        left: 0;
+        margin: 0 !important;
+        overflow: visible !important;
+        position: absolute;
+        top: 0;
+        width: 100% !important;
+    }
+
+    .ofqb-quote-preview {
+        border: 0 !important;
+        box-shadow: none !important;
+        margin: 0 auto !important;
+        min-height: 0 !important;
+        width: 7.5in !important;
+    }
+
+    .ofqb-preview-actions,
+    .ofqb-message,
+    .ofqb-preview-actions * {
+        display: none !important;
+        visibility: hidden !important;
     }
 }

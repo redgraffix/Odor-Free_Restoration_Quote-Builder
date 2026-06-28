@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Odor-Free Restoration Quote Builder
  * Description: Private quote builder for Odor-Free Restoration service quotes.
- * Version: 0.3.1
+ * Version: 0.3.2
  * Author: Redgraffix
  * Text Domain: odorfree-quote-builder
  */
@@ -11,7 +11,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('OFQB_VERSION', '0.3.1');
+define('OFQB_VERSION', '0.3.2');
 define('OFQB_PLUGIN_FILE', __FILE__);
 define('OFQB_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('OFQB_PLUGIN_URL', plugin_dir_url(__FILE__));

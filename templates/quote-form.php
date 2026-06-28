@@ -133,7 +133,6 @@ $field_value = function ($field, $default = '') use ($is_editing_quote, $editing
         <section class="ofqb-section" aria-labelledby="ofqb-services-heading">
             <div class="ofqb-section-heading">
                 <h3 id="ofqb-services-heading">2. Services</h3>
-                <button type="button" class="ofqb-button ofqb-button--small" data-ofqb-add-service>Add Service</button>
             </div>
 
             <div class="ofqb-line-table-wrap">
@@ -160,12 +159,14 @@ $field_value = function ($field, $default = '') use ($is_editing_quote, $editing
                     </tbody>
                 </table>
             </div>
+            <div class="ofqb-line-actions">
+                <button type="button" class="ofqb-button ofqb-button--small" data-ofqb-add-service>Add Service</button>
+            </div>
         </section>
 
         <section class="ofqb-section" aria-labelledby="ofqb-materials-heading">
             <div class="ofqb-section-heading">
                 <h3 id="ofqb-materials-heading">3. Materials</h3>
-                <button type="button" class="ofqb-button ofqb-button--small" data-ofqb-add-material>Add Material</button>
             </div>
 
             <div class="ofqb-line-table-wrap">
@@ -191,6 +192,9 @@ $field_value = function ($field, $default = '') use ($is_editing_quote, $editing
                         <?php endforeach; ?>
                     </tbody>
                 </table>
+            </div>
+            <div class="ofqb-line-actions">
+                <button type="button" class="ofqb-button ofqb-button--small" data-ofqb-add-material>Add Material</button>
             </div>
         </section>
 

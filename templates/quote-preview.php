@@ -138,11 +138,11 @@ $preview_terms = trim(str_replace("Prefilled standard terms can be edited for ea
 
             <footer class="ofqb-preview-footer">
                 <a href="mailto:sales@odorfreerestoration.com">
-                    <img src="<?php echo esc_url(OFQB_PLUGIN_URL . 'assets/images/icon-phone.svg'); ?>" alt="">
+                    <img src="<?php echo esc_url(OFQB_PLUGIN_URL . 'assets/images/icon-globe.svg'); ?>" alt="">
                     <span><strong>Email</strong>Sales@OdorFreeRestoration.com</span>
                 </a>
                 <a href="tel:18664666367">
-                    <img src="<?php echo esc_url(OFQB_PLUGIN_URL . 'assets/images/icon-globe.svg'); ?>" alt="">
+                    <img src="<?php echo esc_url(OFQB_PLUGIN_URL . 'assets/images/icon-phone.svg'); ?>" alt="">
                     <span><strong>Phone</strong>866-4-NO-ODOR (466-6367)</span>
                 </a>
                 <div class="ofqb-footer-brand">
