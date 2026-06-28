@@ -144,6 +144,7 @@ class OFQB_Quotes
         global $wpdb;
 
         $quotes_table = $wpdb->prefix . 'ofqb_quotes';
+        $users_table = $wpdb->users;
 
         if (!self::table_exists($quotes_table)) {
             return array(
@@ -151,7 +152,42 @@ class OFQB_Quotes
                 'draft_quotes' => 0,
                 'sent_quotes' => 0,
                 'closed_quotes' => 0,
+                'deleted_quotes' => 0,
+                'total_value' => 0,
+                'quotes_by_user' => array(),
+                'quotes_by_month' => self::empty_monthly_stats(),
             );
+        }
+
+        $quotes_by_user = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT COALESCE(NULLIF(u.display_name, ''), u.user_login, q.salesperson_name, 'Unknown') AS label, COUNT(*) AS total
+                FROM {$quotes_table} q
+                LEFT JOIN {$users_table} u ON q.created_by_user_id = u.ID
+                WHERE q.status <> %s
+                GROUP BY q.created_by_user_id, label
+                ORDER BY total DESC, label ASC
+                LIMIT 10",
+                'deleted'
+            )
+        );
+
+        $monthly_rows = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT DATE_FORMAT(created_at, '%%Y-%%m') AS month_key, COUNT(*) AS total
+                FROM {$quotes_table}
+                WHERE status <> %s AND created_at >= DATE_SUB(CURDATE(), INTERVAL 11 MONTH)
+                GROUP BY month_key
+                ORDER BY month_key ASC",
+                'deleted'
+            )
+        );
+        $quotes_by_month = self::empty_monthly_stats();
+
+        foreach ($monthly_rows as $monthly_row) {
+            if (isset($quotes_by_month[$monthly_row->month_key])) {
+                $quotes_by_month[$monthly_row->month_key]['total'] = (int) $monthly_row->total;
+            }
         }
 
         return array(
@@ -159,7 +195,16 @@ class OFQB_Quotes
             'draft_quotes' => (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$quotes_table} WHERE status = %s", 'draft')),
             'sent_quotes' => (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$quotes_table} WHERE status = %s", 'sent')),
             'closed_quotes' => (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$quotes_table} WHERE status = %s", 'closed')),
+            'deleted_quotes' => (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$quotes_table} WHERE status = %s", 'deleted')),
+            'total_value' => (float) $wpdb->get_var($wpdb->prepare("SELECT COALESCE(SUM(total), 0) FROM {$quotes_table} WHERE status <> %s", 'deleted')),
+            'quotes_by_user' => $quotes_by_user,
+            'quotes_by_month' => array_values($quotes_by_month),
         );
+    }
+
+    public static function strip_default_terms_intro($terms)
+    {
+        return trim(preg_replace('/^\s*Prefilled standard terms can be edited for each client\.\s*/i', '', (string) $terms));
     }
 
     public static function get_default_terms()
@@ -820,6 +865,23 @@ class OFQB_Quotes
     public static function money($value)
     {
         return '$' . number_format((float) $value, 2);
+    }
+
+    private static function empty_monthly_stats()
+    {
+        $months = array();
+        $timestamp = strtotime(current_time('Y-m-01') . ' -11 months');
+
+        for ($index = 0; $index < 12; $index += 1) {
+            $month_key = date('Y-m', strtotime('+' . $index . ' months', $timestamp));
+            $months[$month_key] = array(
+                'key' => $month_key,
+                'label' => date_i18n('M Y', strtotime($month_key . '-01')),
+                'total' => 0,
+            );
+        }
+
+        return $months;
     }
 
     private static function table_exists($table)

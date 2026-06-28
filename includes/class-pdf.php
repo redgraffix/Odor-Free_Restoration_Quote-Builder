@@ -383,8 +383,7 @@ class OFQB_PDF
         $y = $draw_rows($services, 'service', $y);
         $y = $draw_rows($materials, 'material', $y);
 
-        $pdf_terms = trim(str_replace("Prefilled standard terms can be edited for each client.\n\n", '', (string) $quote->terms));
-        $pdf_terms = trim(str_replace('Prefilled standard terms can be edited for each client.', '', $pdf_terms));
+        $pdf_terms = OFQB_Quotes::strip_default_terms_intro($quote->terms);
         $terms_lines = $pdf->wrap_lines_for_width($pdf_terms, 270, 8);
         $terms_height = max(72, 26 + (min(7, count($terms_lines)) * 10));
         $totals_height = 84;

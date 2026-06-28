@@ -14,7 +14,7 @@ $deleted_user_name = $deleted_user ? $deleted_user->display_name : '';
 $can_modify_quote = OFQB_Quotes::current_user_can_modify_quote($saved_quote);
 $quote_header_path = OFQB_PLUGIN_DIR . 'assets/images/quote-header.jpg';
 $quote_header_version = file_exists($quote_header_path) ? filemtime($quote_header_path) : OFQB_VERSION;
-$preview_terms = trim(str_replace("Prefilled standard terms can be edited for each client.\n\n", '', (string) $saved_quote->terms));
+$preview_terms = OFQB_Quotes::strip_default_terms_intro($saved_quote->terms);
 $default_email_message = OFQB_Quotes::get_default_email_message($saved_quote->quote_number);
 ?>
 
@@ -181,18 +181,21 @@ $default_email_message = OFQB_Quotes::get_default_email_message($saved_quote->qu
             <?php endif; ?>
             <p><strong>Status:</strong> <?php echo esc_html(ucwords(str_replace('_', ' ', $saved_quote->status))); ?></p>
         </div>
-        <div class="ofqb-action-grid">
-            <button type="button" class="ofqb-button" data-ofqb-print-quote>Print Quote</button>
-            <?php if ('draft' === $saved_quote->status || 'deleted' === $saved_quote->status) : ?>
-                <button type="button" class="ofqb-button ofqb-button--secondary" disabled>Download PDF</button>
-            <?php else : ?>
-                <a class="ofqb-button ofqb-button--secondary" href="<?php echo esc_url(wp_nonce_url(admin_url('admin-post.php?action=ofqb_download_pdf&quote_id=' . (int) $saved_quote->id), 'ofqb_download_pdf_' . (int) $saved_quote->id)); ?>">Download PDF</a>
-            <?php endif; ?>
-            <?php if ('draft' === $saved_quote->status || 'deleted' === $saved_quote->status) : ?>
-                <button type="button" class="ofqb-button ofqb-button--secondary" disabled>Email PDF</button>
-            <?php else : ?>
-                <button type="button" class="ofqb-button ofqb-button--secondary" data-ofqb-open-email-modal>Email PDF</button>
-            <?php endif; ?>
+        <div class="ofqb-action-grid ofqb-action-grid--quote">
+            <div class="ofqb-action-group ofqb-action-group--delivery">
+                <button type="button" class="ofqb-button" data-ofqb-print-quote>Print Quote</button>
+                <?php if ('draft' === $saved_quote->status || 'deleted' === $saved_quote->status) : ?>
+                    <button type="button" class="ofqb-button ofqb-button--secondary" disabled>Download PDF</button>
+                <?php else : ?>
+                    <a class="ofqb-button ofqb-button--secondary" href="<?php echo esc_url(wp_nonce_url(admin_url('admin-post.php?action=ofqb_download_pdf&quote_id=' . (int) $saved_quote->id), 'ofqb_download_pdf_' . (int) $saved_quote->id)); ?>">Download PDF</a>
+                <?php endif; ?>
+                <?php if ('draft' === $saved_quote->status || 'deleted' === $saved_quote->status) : ?>
+                    <button type="button" class="ofqb-button ofqb-button--secondary" disabled>Email PDF</button>
+                <?php else : ?>
+                    <button type="button" class="ofqb-button ofqb-button--secondary" data-ofqb-open-email-modal>Email PDF</button>
+                <?php endif; ?>
+            </div>
+            <div class="ofqb-action-group ofqb-action-group--management">
             <?php if ($can_modify_quote) : ?>
                 <?php if ('deleted' === $saved_quote->status) : ?>
                     <form action="" method="post">
@@ -209,7 +212,8 @@ $default_email_message = OFQB_Quotes::get_default_email_message($saved_quote->qu
                     </form>
                 <?php endif; ?>
             <?php endif; ?>
-            <a class="ofqb-button ofqb-button--secondary" href="<?php echo esc_url($base_url); ?>">Home</a>
+                <a class="ofqb-button ofqb-button--secondary" href="<?php echo esc_url($base_url); ?>">Home</a>
+            </div>
         </div>
     </div>
 

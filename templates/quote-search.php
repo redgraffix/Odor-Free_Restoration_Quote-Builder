@@ -21,7 +21,7 @@ if (!defined('ABSPATH')) {
             <?php if ('deleted' === $quote_list_context) : ?>
                 <a class="ofqb-button ofqb-button--secondary" href="<?php echo esc_url(add_query_arg('ofqb_view', 'search', $base_url)); ?>">Active Quotes</a>
             <?php else : ?>
-                <a class="ofqb-button ofqb-button--secondary" href="<?php echo esc_url(add_query_arg('ofqb_view', 'deleted', $base_url)); ?>">View Deleted Quotes</a>
+                <a class="ofqb-button ofqb-button--deleted-link" href="<?php echo esc_url(add_query_arg('ofqb_view', 'deleted', $base_url)); ?>">View Deleted Quotes</a>
             <?php endif; ?>
         </div>
     </section>

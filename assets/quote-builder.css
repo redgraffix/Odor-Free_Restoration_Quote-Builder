@@ -64,6 +64,13 @@
     min-height: 128px;
     padding: 22px;
     text-decoration: none !important;
+    transition: background-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+.ofqb-home-button:hover,
+.ofqb-home-button:focus {
+    box-shadow: 0 8px 18px rgba(17, 24, 39, 0.13);
+    transform: translateY(-1px);
 }
 
 .ofqb-home-button strong {
@@ -82,6 +89,11 @@
     background: #0d74b8;
 }
 
+.ofqb-home-button--blue:hover,
+.ofqb-home-button--blue:focus {
+    background: #0a659f;
+}
+
 .ofqb-home-button--green {
     background: var(--ofqb-green);
 }
@@ -92,12 +104,22 @@
 }
 
 .ofqb-home-button--yellow {
-    background: var(--ofqb-yellow);
-    color: #111 !important;
+    background: #e8eef2;
+    color: var(--ofqb-blue) !important;
+}
+
+.ofqb-home-button--yellow:hover,
+.ofqb-home-button--yellow:focus {
+    background: #d6e0e7;
 }
 
 .ofqb-home-button--navy {
     background: var(--ofqb-navy);
+}
+
+.ofqb-home-button--navy:hover,
+.ofqb-home-button--navy:focus {
+    background: #11284d;
 }
 
 .ofqb-home-button--wide {
@@ -398,8 +420,8 @@
     background: #fff8d6;
     border: 1px solid #f4c400;
     border-radius: 8px;
-    margin-top: 18px;
-    padding: 14px 16px;
+    margin-top: 14px;
+    padding: 10px 12px;
 }
 
 .ofqb-readiness--ready {
@@ -409,17 +431,18 @@
 
 .ofqb-readiness__heading {
     color: #111;
-    margin-bottom: 6px;
+    font-size: 14px;
+    margin-bottom: 4px;
 }
 
 .ofqb-readiness ul {
     margin: 0;
-    padding-left: 22px;
+    padding-left: 18px;
 }
 
 .ofqb-readiness li {
-    font-size: 14px;
-    line-height: 1.35;
+    font-size: 13px;
+    line-height: 1.28;
 }
 
 .screen-reader-text {
@@ -559,7 +582,7 @@
 .ofqb-admin-stats {
     display: grid;
     gap: 12px;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(6, minmax(0, 1fr));
     margin: 0 0 18px;
 }
 
@@ -577,26 +600,158 @@
 
 .ofqb-admin-stats dd {
     color: var(--ofqb-blue);
-    font-size: 24px;
+    font-size: 22px;
     font-weight: 800;
     margin: 0;
+    overflow-wrap: anywhere;
+}
+
+.ofqb-admin-chart-panel {
+    border: 1px solid var(--ofqb-border);
+    border-radius: 8px;
+    margin: 18px 0;
+    padding: 18px;
+}
+
+.ofqb-admin-chart-heading h3 {
+    color: #333;
+    font-size: 26px;
+    font-weight: 500;
+    line-height: 1.15;
+    margin: 0 0 8px;
+}
+
+.ofqb-admin-chart-heading p {
+    color: #425466;
+    margin: 0 0 16px;
+}
+
+.ofqb-admin-charts {
+    display: grid;
+    gap: 16px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.ofqb-admin-chart-card {
+    background: #f8fafc;
+    border: 1px solid var(--ofqb-border);
+    border-radius: 6px;
+    min-height: 300px;
+    padding: 14px;
+}
+
+.ofqb-admin-chart-card label {
+    display: grid;
+    gap: 6px;
+}
+
+.ofqb-admin-chart-card label span,
+.ofqb-chart-high {
+    color: #425466;
+    font-size: 14px;
+    margin: 0;
+}
+
+.ofqb-admin-chart-card select {
+    background: #fff;
+    min-height: 42px;
+}
+
+.ofqb-bar-chart {
+    display: grid;
+    gap: 12px;
+    margin-top: 18px;
+}
+
+.ofqb-bar-row {
+    align-items: center;
+    display: grid;
+    gap: 12px;
+    grid-template-columns: 125px minmax(0, 1fr) 28px;
+}
+
+.ofqb-bar-row span {
+    color: #111;
+    font-size: 14px;
+}
+
+.ofqb-bar-row i {
+    background: #11a8cf;
+    border-radius: 999px;
+    display: block;
+    height: 14px;
+}
+
+.ofqb-bar-row strong {
+    font-size: 14px;
+    text-align: right;
+}
+
+.ofqb-chart-empty {
+    color: #425466;
+    margin: 0;
+}
+
+.ofqb-chart-high {
+    margin: 14px 0 2px;
+}
+
+.ofqb-line-chart {
+    background: #fff;
+    border: 1px solid var(--ofqb-border);
+    border-radius: 6px;
+    display: block;
+    height: 158px;
+    margin-top: 2px;
+    width: 100%;
+}
+
+.ofqb-line-chart line {
+    stroke: #b9c4cf;
+    stroke-width: 1.5;
+}
+
+.ofqb-line-chart polyline {
+    fill: none;
+    stroke: var(--ofqb-green);
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 3;
+}
+
+.ofqb-line-chart circle {
+    fill: #11a8cf;
+    stroke: #fff;
+    stroke-width: 1;
+}
+
+.ofqb-line-chart-labels {
+    color: #425466;
+    display: flex;
+    font-size: 13px;
+    justify-content: space-between;
+    margin-top: 8px;
 }
 
 .ofqb-button {
     background: var(--ofqb-green);
-    border: 0;
+    border: 1px solid transparent;
     border-radius: 8px;
     color: #fff !important;
+    cursor: pointer;
     display: inline-flex;
     font-weight: 700;
     justify-content: center;
     padding: 11px 18px;
     text-decoration: none !important;
+    transition: background-color 150ms ease, border-color 150ms ease, box-shadow 150ms ease, color 150ms ease, transform 150ms ease;
 }
 
 .ofqb-button:hover,
 .ofqb-button:focus {
     background: #11883c;
+    box-shadow: 0 5px 14px rgba(17, 24, 39, 0.12);
+    transform: translateY(-1px);
 }
 
 .ofqb-button--blue {
@@ -618,6 +773,18 @@
     background: #d6e0e7;
 }
 
+.ofqb-button--deleted-link {
+    background: #fff2f1;
+    border-color: #cc1f1a;
+    color: #8a1111 !important;
+}
+
+.ofqb-button--deleted-link:hover,
+.ofqb-button--deleted-link:focus {
+    background: #cc1f1a;
+    color: #fff !important;
+}
+
 .ofqb-button--danger {
     background: #cc1f1a;
     color: #fff !important;
@@ -635,7 +802,9 @@
 
 .ofqb-button:disabled:hover,
 .ofqb-button:disabled:focus {
+    box-shadow: none;
     background: #e8eef2;
+    transform: none;
 }
 
 .ofqb-preview-wrap {
@@ -919,12 +1088,29 @@
     grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.ofqb-action-grid--quote {
+    grid-template-columns: 1fr;
+}
+
+.ofqb-action-group {
+    display: grid;
+    gap: 10px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.ofqb-action-group--management {
+    border-top: 1px solid var(--ofqb-border);
+    padding-top: 10px;
+}
+
 .ofqb-action-grid form,
+.ofqb-action-group form,
 .ofqb-action-grid .ofqb-button {
     width: 100%;
 }
 
-.ofqb-action-grid form {
+.ofqb-action-grid form,
+.ofqb-action-group form {
     margin: 0;
 }
 
@@ -1142,7 +1328,12 @@
 
     .ofqb-home-actions,
     .ofqb-home-actions--salesperson,
-    .ofqb-admin-stats {
+    .ofqb-admin-stats,
+    .ofqb-admin-charts {
+        grid-template-columns: 1fr;
+    }
+
+    .ofqb-action-group {
         grid-template-columns: 1fr;
     }
 
