@@ -177,7 +177,11 @@ $preview_terms = trim(str_replace("Prefilled standard terms can be edited for ea
         </div>
         <div class="ofqb-action-grid">
             <button type="button" class="ofqb-button" data-ofqb-print-quote>Print Quote</button>
-            <button type="button" class="ofqb-button ofqb-button--secondary" disabled>Download PDF Soon</button>
+            <?php if ('draft' === $saved_quote->status || 'deleted' === $saved_quote->status) : ?>
+                <button type="button" class="ofqb-button ofqb-button--secondary" disabled>Download PDF</button>
+            <?php else : ?>
+                <a class="ofqb-button ofqb-button--secondary" href="<?php echo esc_url(wp_nonce_url(admin_url('admin-post.php?action=ofqb_download_pdf&quote_id=' . (int) $saved_quote->id), 'ofqb_download_pdf_' . (int) $saved_quote->id)); ?>">Download PDF</a>
+            <?php endif; ?>
             <button type="button" class="ofqb-button ofqb-button--secondary" disabled>Email PDF Soon</button>
             <?php if ($can_modify_quote) : ?>
                 <?php if ('deleted' === $saved_quote->status) : ?>
