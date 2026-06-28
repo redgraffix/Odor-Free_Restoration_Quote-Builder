@@ -232,7 +232,28 @@ class OFQB_PDF
 
         $add_footer = function () use ($pdf, $blue, $green, $left, $right, &$content, &$links) {
             $footer_y = 734;
+            $white = array(255, 255, 255);
+            $email_icon_x = $left + 10;
+            $phone_icon_x = $left + 214;
+            $icon_y = $footer_y + 17;
             $content .= $pdf->rect(0, $footer_y, 612, 34, $blue, null);
+            $content .= $pdf->circle($email_icon_x, $icon_y, 8, $white, null, 1.2);
+            $content .= $pdf->line_color($email_icon_x - 5, $icon_y, $email_icon_x + 5, $icon_y, $white, 0.9);
+            $content .= $pdf->line_color($email_icon_x, $icon_y - 5, $email_icon_x, $icon_y + 5, $white, 0.9);
+            $content .= $pdf->line_color($email_icon_x - 4, $icon_y - 3, $email_icon_x + 4, $icon_y - 3, $white, 0.7);
+            $content .= $pdf->line_color($email_icon_x - 4, $icon_y + 3, $email_icon_x + 4, $icon_y + 3, $white, 0.7);
+            $content .= $pdf->circle($phone_icon_x, $icon_y, 8, $white, null, 1.2);
+            $content .= $pdf->polyline(
+                array(
+                    array($phone_icon_x - 4.5, $icon_y - 3.5),
+                    array($phone_icon_x - 2, $icon_y + 3.5),
+                    array($phone_icon_x + 4.5, $icon_y + 4.5),
+                ),
+                $white,
+                1.4
+            );
+            $content .= $pdf->line_color($phone_icon_x - 5.3, $icon_y - 4.8, $phone_icon_x - 2.7, $icon_y - 5.4, $white, 1.4);
+            $content .= $pdf->line_color($phone_icon_x + 4.6, $icon_y + 4.8, $phone_icon_x + 5.5, $icon_y + 2.2, $white, 1.4);
             $content .= $pdf->text('Email', $left + 24, $footer_y + 14, 6.5, 'B', $green);
             $content .= $pdf->text('Sales@OdorFreeRestoration.com', $left + 24, $footer_y + 24, 6.5, 'F1', array(255, 255, 255));
             $content .= $pdf->text('Phone', $left + 228, $footer_y + 14, 6.5, 'B', $green);
@@ -578,9 +599,73 @@ class OFQB_Simple_PDF
         return sprintf("0 0 0 RG %0.2F %0.2F m %0.2F %0.2F l S\n", $x1, 792 - $y1, $x2, 792 - $y2);
     }
 
-    public function line_color($x1, $y1, $x2, $y2, $color = array(0, 0, 0))
+    public function line_color($x1, $y1, $x2, $y2, $color = array(0, 0, 0), $line_width = 1)
     {
-        return $this->color($color, true) . sprintf("%0.2F %0.2F m %0.2F %0.2F l S\n", $x1, 792 - $y1, $x2, 792 - $y2);
+        return $this->color($color, true) . sprintf("%0.2F w %0.2F %0.2F m %0.2F %0.2F l S\n", $line_width, $x1, 792 - $y1, $x2, 792 - $y2);
+    }
+
+    public function polyline($points, $color = array(0, 0, 0), $line_width = 1)
+    {
+        if (count($points) < 2) {
+            return '';
+        }
+
+        $first = array_shift($points);
+        $content = $this->color($color, true) . sprintf("%0.2F w %0.2F %0.2F m ", $line_width, $first[0], 792 - $first[1]);
+
+        foreach ($points as $point) {
+            $content .= sprintf("%0.2F %0.2F l ", $point[0], 792 - $point[1]);
+        }
+
+        return $content . "S\n";
+    }
+
+    public function circle($cx, $cy, $r, $stroke = array(0, 0, 0), $fill = null, $line_width = 1)
+    {
+        $k = 0.5522847498;
+        $y = 792 - $cy;
+        $content = sprintf("%0.2F w\n", $line_width);
+
+        if ($fill) {
+            $content .= $this->color($fill, false);
+        }
+
+        if ($stroke) {
+            $content .= $this->color($stroke, true);
+        }
+
+        $content .= sprintf(
+            "%0.2F %0.2F m %0.2F %0.2F %0.2F %0.2F %0.2F %0.2F c %0.2F %0.2F %0.2F %0.2F %0.2F %0.2F c %0.2F %0.2F %0.2F %0.2F %0.2F %0.2F c %0.2F %0.2F %0.2F %0.2F %0.2F %0.2F c %s\n",
+            $cx + $r,
+            $y,
+            $cx + $r,
+            $y + ($k * $r),
+            $cx + ($k * $r),
+            $y + $r,
+            $cx,
+            $y + $r,
+            $cx - ($k * $r),
+            $y + $r,
+            $cx - $r,
+            $y + ($k * $r),
+            $cx - $r,
+            $y,
+            $cx - $r,
+            $y - ($k * $r),
+            $cx - ($k * $r),
+            $y - $r,
+            $cx,
+            $y - $r,
+            $cx + ($k * $r),
+            $y - $r,
+            $cx + $r,
+            $y - ($k * $r),
+            $cx + $r,
+            $y,
+            $fill && $stroke ? 'B' : ($fill ? 'f' : 'S')
+        );
+
+        return $content;
     }
 
     public function text($text, $x, $y, $size = 8, $font = 'F1', $color = array(0, 0, 0))
