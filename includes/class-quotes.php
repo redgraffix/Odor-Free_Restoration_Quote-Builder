@@ -182,54 +182,162 @@ class OFQB_Quotes
         global $wpdb;
 
         $quotes_table = $wpdb->prefix . 'ofqb_quotes';
+        $services_table = $wpdb->prefix . 'ofqb_quote_services';
+        $materials_table = $wpdb->prefix . 'ofqb_quote_materials';
+        $users_table = $wpdb->users;
         $defaults = array(
             'created_by_user_id' => 0,
+            'created_by_filter' => 0,
             'search' => '',
+            'sort' => 'date',
+            'order' => 'desc',
+            'page' => 1,
+            'per_page' => 20,
             'status_filter' => 'active',
-            'limit' => 100,
         );
         $args = wp_parse_args($args, $defaults);
 
         if (!self::table_exists($quotes_table)) {
-            return array();
+            return array(
+                'items' => array(),
+                'total_items' => 0,
+                'total_pages' => 1,
+                'page' => 1,
+                'per_page' => (int) $args['per_page'],
+                'sort' => 'date',
+                'order' => 'desc',
+                'search' => '',
+                'status_filter' => 'active',
+            );
         }
 
         if (!current_user_can('manage_options')) {
             $args['created_by_user_id'] = get_current_user_id();
+            $args['created_by_filter'] = 0;
         }
 
+        $page = max(1, absint($args['page']));
+        $per_page = max(1, min(100, absint($args['per_page'])));
+        $offset = ($page - 1) * $per_page;
         $where = array();
         $values = array();
 
         if ('deleted' === $args['status_filter']) {
-            $where[] = 'status = %s';
+            $where[] = 'q.status = %s';
             $values[] = 'deleted';
         } else {
-            $where[] = 'status <> %s';
+            $where[] = 'q.status <> %s';
             $values[] = 'deleted';
         }
 
         if (!empty($args['created_by_user_id'])) {
-            $where[] = 'created_by_user_id = %d';
+            $where[] = 'q.created_by_user_id = %d';
             $values[] = absint($args['created_by_user_id']);
+        }
+
+        if (!empty($args['created_by_filter'])) {
+            $where[] = 'q.created_by_user_id = %d';
+            $values[] = absint($args['created_by_filter']);
         }
 
         $search = trim((string) $args['search']);
 
         if ('' !== $search) {
             $like = '%' . $wpdb->esc_like($search) . '%';
-            $where[] = '(quote_number LIKE %s OR customer_name LIKE %s OR customer_company LIKE %s OR customer_email LIKE %s OR customer_phone LIKE %s OR status LIKE %s)';
-            array_push($values, $like, $like, $like, $like, $like, $like);
+            $where[] = '(
+                q.quote_number LIKE %s
+                OR q.customer_name LIKE %s
+                OR q.customer_company LIKE %s
+                OR q.customer_email LIKE %s
+                OR q.customer_phone LIKE %s
+                OR q.accounts_payable_name LIKE %s
+                OR q.accounts_payable_email LIKE %s
+                OR q.customer_address LIKE %s
+                OR q.customer_city LIKE %s
+                OR q.customer_state LIKE %s
+                OR q.customer_zip LIKE %s
+                OR q.customer_tax_id LIKE %s
+                OR q.notes LIKE %s
+                OR q.status LIKE %s
+                OR CAST(q.subtotal AS CHAR) LIKE %s
+                OR CAST(q.tax_amount AS CHAR) LIKE %s
+                OR CAST(q.total AS CHAR) LIKE %s
+                OR u.display_name LIKE %s
+                OR u.user_login LIKE %s
+                OR u.user_email LIKE %s
+                OR s.service_description LIKE %s
+                OR m.material_description LIKE %s
+            )';
+            array_push($values, $like, $like, $like, $like, $like, $like, $like, $like, $like, $like, $like, $like, $like, $like, $like, $like, $like, $like, $like, $like, $like, $like);
         }
 
-        $values[] = max(1, min(250, absint($args['limit'])));
+        $sort_columns = array(
+            'date' => 'q.updated_at',
+            'updated_at' => 'q.updated_at',
+            'created_at' => 'q.created_at',
+            'company' => 'q.customer_company',
+            'customer' => 'q.customer_name',
+            'total' => 'q.total',
+            'created_by' => 'u.display_name',
+            'status' => 'q.status',
+        );
+        $sort = isset($sort_columns[$args['sort']]) ? $sort_columns[$args['sort']] : 'q.updated_at';
+        $order = 'asc' === strtolower((string) $args['order']) ? 'ASC' : 'DESC';
+        $where_sql = implode(' AND ', $where);
+        $joins_sql = "LEFT JOIN {$users_table} u ON q.created_by_user_id = u.ID LEFT JOIN {$services_table} s ON q.id = s.quote_id LEFT JOIN {$materials_table} m ON q.id = m.quote_id";
+        $total_items = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(DISTINCT q.id) FROM {$quotes_table} q {$joins_sql} WHERE {$where_sql}", $values));
 
-        return $wpdb->get_results(
+        $values[] = $per_page;
+        $values[] = $offset;
+        $items = $wpdb->get_results(
             $wpdb->prepare(
-                "SELECT * FROM {$quotes_table} WHERE " . implode(' AND ', $where) . " ORDER BY updated_at DESC, created_at DESC, id DESC LIMIT %d",
+                "SELECT DISTINCT q.* FROM {$quotes_table} q {$joins_sql} WHERE {$where_sql} ORDER BY {$sort} {$order}, q.id DESC LIMIT %d OFFSET %d",
                 $values
             )
         );
+
+        return array(
+            'items' => $items,
+            'total_items' => $total_items,
+            'total_pages' => max(1, (int) ceil($total_items / $per_page)),
+            'page' => $page,
+            'per_page' => $per_page,
+            'sort' => array_search($sort, $sort_columns, true) ?: 'date',
+            'order' => strtolower($order),
+            'search' => $search,
+            'status_filter' => 'deleted' === $args['status_filter'] ? 'deleted' : 'active',
+        );
+    }
+
+    public static function get_quote_creators($status_filter = 'active')
+    {
+        global $wpdb;
+
+        $quotes_table = $wpdb->prefix . 'ofqb_quotes';
+        $users_table = $wpdb->users;
+        $status_operator = 'deleted' === $status_filter ? '=' : '<>';
+
+        if (!self::table_exists($quotes_table)) {
+            return array();
+        }
+
+        if (!current_user_can('manage_options')) {
+            $user = get_userdata(get_current_user_id());
+            return $user ? array($user) : array();
+        }
+
+        $user_ids = $wpdb->get_col($wpdb->prepare("SELECT DISTINCT q.created_by_user_id FROM {$quotes_table} q LEFT JOIN {$users_table} u ON q.created_by_user_id = u.ID WHERE q.status {$status_operator} %s AND q.created_by_user_id > 0 ORDER BY u.display_name ASC", 'deleted'));
+        $users = array();
+
+        foreach ($user_ids as $user_id) {
+            $user = get_userdata((int) $user_id);
+
+            if ($user) {
+                $users[] = $user;
+            }
+        }
+
+        return $users;
     }
 
     private static function sanitize_quote_data($source)

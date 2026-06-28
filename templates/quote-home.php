@@ -52,6 +52,7 @@ if (!defined('ABSPATH')) {
                 </div>
             <?php else : ?>
                 <?php $quotes_for_table = $recent_quotes; ?>
+                <?php $quote_table_show_filters = false; ?>
                 <?php include OFQB_PLUGIN_DIR . 'templates/quote-table.php'; ?>
             <?php endif; ?>
         </section>

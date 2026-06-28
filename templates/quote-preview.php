@@ -6,6 +6,11 @@ if (!defined('ABSPATH')) {
 
 $quote_creator = !empty($saved_quote->created_by_user_id) ? get_userdata((int) $saved_quote->created_by_user_id) : null;
 $quote_creator_email = $quote_creator && $quote_creator->user_email ? $quote_creator->user_email : $saved_quote->salesperson_email;
+$quote_creator_name = $quote_creator ? $quote_creator->display_name : ($saved_quote->salesperson_name ? $saved_quote->salesperson_name : $salesperson_name);
+$last_editor = !empty($saved_quote->updated_by_user_id) ? get_userdata((int) $saved_quote->updated_by_user_id) : null;
+$last_editor_name = $last_editor ? $last_editor->display_name : '';
+$deleted_user = !empty($saved_quote->deleted_by_user_id) ? get_userdata((int) $saved_quote->deleted_by_user_id) : null;
+$deleted_user_name = $deleted_user ? $deleted_user->display_name : '';
 $can_modify_quote = OFQB_Quotes::current_user_can_modify_quote($saved_quote);
 $quote_header_path = OFQB_PLUGIN_DIR . 'assets/images/quote-header.jpg';
 $quote_header_version = file_exists($quote_header_path) ? filemtime($quote_header_path) : OFQB_VERSION;
@@ -154,18 +159,41 @@ $preview_terms = trim(str_replace("Prefilled standard terms can be edited for ea
     </div>
 
     <div class="ofqb-preview-actions">
-        <p><strong>Status:</strong> <?php echo esc_html(ucwords(str_replace('_', ' ', $saved_quote->status))); ?></p>
+        <div class="ofqb-preview-meta-panel" aria-label="Quote metadata">
+            <p><strong>Quote Number:</strong> <?php echo esc_html($saved_quote->quote_number); ?></p>
+            <p><strong>Created:</strong> <?php echo esc_html(date_i18n(get_option('date_format') . ' ' . get_option('time_format'), strtotime($saved_quote->created_at))); ?></p>
+            <p><strong>Created By:</strong> <?php echo esc_html($quote_creator_name); ?></p>
+            <p><strong>Last Updated:</strong> <?php echo esc_html(date_i18n(get_option('date_format') . ' ' . get_option('time_format'), strtotime($saved_quote->updated_at))); ?></p>
+            <?php if ($last_editor_name) : ?>
+                <p><strong>Last Edited By:</strong> <?php echo esc_html($last_editor_name); ?></p>
+            <?php endif; ?>
+            <?php if ('deleted' === $saved_quote->status && !empty($saved_quote->deleted_at)) : ?>
+                <p><strong>Deleted:</strong> <?php echo esc_html(date_i18n(get_option('date_format') . ' ' . get_option('time_format'), strtotime($saved_quote->deleted_at))); ?></p>
+                <?php if ($deleted_user_name) : ?>
+                    <p><strong>Deleted By:</strong> <?php echo esc_html($deleted_user_name); ?></p>
+                <?php endif; ?>
+            <?php endif; ?>
+            <p><strong>Status:</strong> <?php echo esc_html(ucwords(str_replace('_', ' ', $saved_quote->status))); ?></p>
+        </div>
         <div class="ofqb-action-grid">
             <button type="button" class="ofqb-button" data-ofqb-print-quote>Print Quote</button>
             <button type="button" class="ofqb-button ofqb-button--secondary" disabled>Download PDF Soon</button>
             <button type="button" class="ofqb-button ofqb-button--secondary" disabled>Email PDF Soon</button>
-            <?php if ($can_modify_quote && 'deleted' !== $saved_quote->status) : ?>
-                <a class="ofqb-button ofqb-button--secondary" href="<?php echo esc_url(add_query_arg(array('ofqb_quote_id' => (int) $saved_quote->id, 'ofqb_mode' => 'revise'), $base_url)); ?>">Revise Quote</a>
-                <form action="" method="post">
-                    <?php wp_nonce_field('ofqb_quote_action_' . (int) $saved_quote->id, 'ofqb_quote_action_nonce'); ?>
-                    <input type="hidden" name="ofqb_action" value="delete_quote">
-                    <button type="submit" class="ofqb-button ofqb-button--danger">Move to Deleted</button>
-                </form>
+            <?php if ($can_modify_quote) : ?>
+                <?php if ('deleted' === $saved_quote->status) : ?>
+                    <form action="" method="post">
+                        <?php wp_nonce_field('ofqb_quote_action_' . (int) $saved_quote->id, 'ofqb_quote_action_nonce'); ?>
+                        <input type="hidden" name="ofqb_action" value="restore_quote">
+                        <button type="submit" class="ofqb-button" data-ofqb-confirm="Restore this quote?">Restore Quote</button>
+                    </form>
+                <?php else : ?>
+                    <a class="ofqb-button ofqb-button--secondary" href="<?php echo esc_url(add_query_arg(array('ofqb_quote_id' => (int) $saved_quote->id, 'ofqb_mode' => 'revise'), $base_url)); ?>">Revise Quote</a>
+                    <form action="" method="post">
+                        <?php wp_nonce_field('ofqb_quote_action_' . (int) $saved_quote->id, 'ofqb_quote_action_nonce'); ?>
+                        <input type="hidden" name="ofqb_action" value="delete_quote">
+                        <button type="submit" class="ofqb-button ofqb-button--danger" data-ofqb-confirm="Move this quote to Deleted? It will be hidden from normal quote lists, but it can be restored later.">Move to Deleted</button>
+                    </form>
+                <?php endif; ?>
             <?php endif; ?>
             <a class="ofqb-button ofqb-button--secondary" href="<?php echo esc_url($base_url); ?>">Home</a>
         </div>

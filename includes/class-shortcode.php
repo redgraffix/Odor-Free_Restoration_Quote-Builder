@@ -75,7 +75,7 @@ class OFQB_Shortcode
             $quote_id = absint(wp_unslash($_GET['ofqb_quote_id']));
             $quote_action_result = OFQB_Quotes::maybe_handle_quote_action($quote_id);
             $quote_action_error = is_wp_error($quote_action_result) ? $quote_action_result->get_error_message() : '';
-            $quote_action_notice = true === $quote_action_result ? 'Quote was updated.' : '';
+            $quote_action_notice = '';
             $loaded_quote = OFQB_Quotes::get_quote_with_items($quote_id);
 
             if ($loaded_quote) {
@@ -85,6 +85,19 @@ class OFQB_Shortcode
 
                 if (!OFQB_Quotes::current_user_can_modify_quote($saved_quote)) {
                     return '<div class="odorfree-quote-builder odorfree-quote-builder--notice">You can only view quotes you created.</div>';
+                }
+
+                $creator = get_userdata((int) $saved_quote->created_by_user_id);
+                $salesperson_name = $creator ? $creator->display_name : $salesperson_name;
+
+                if (true === $quote_action_result) {
+                    $completed_action = !empty($_POST['ofqb_action']) ? sanitize_key(wp_unslash($_POST['ofqb_action'])) : '';
+
+                    if ('update_status' === $completed_action) {
+                        $quote_action_notice = 'Quote ' . $saved_quote->quote_number . ' status was updated.';
+                    } else {
+                        $quote_action_notice = 'deleted' === $saved_quote->status ? 'Quote ' . $saved_quote->quote_number . ' was deleted.' : 'Quote ' . $saved_quote->quote_number . ' was restored.';
+                    }
                 }
 
                 $should_edit_quote = (!empty($_GET['ofqb_mode']) && 'revise' === sanitize_text_field(wp_unslash($_GET['ofqb_mode']))) || 'draft' === $saved_quote->status;
@@ -116,22 +129,41 @@ class OFQB_Shortcode
         }
 
         if ('search' === $quote_view) {
-            $quotes_for_table = OFQB_Quotes::get_quote_list(array(
-                'search' => !empty($_GET['ofqb_search']) ? sanitize_text_field(wp_unslash($_GET['ofqb_search'])) : '',
-                'limit' => 100,
-            ));
+            $quote_list_context = 'search';
+            $quote_list_result = OFQB_Quotes::get_quote_list(self::get_quote_list_args());
+            $quote_creators = OFQB_Quotes::get_quote_creators();
+
             ob_start();
-            include OFQB_PLUGIN_DIR . 'templates/quote-search-placeholder.php';
+            include OFQB_PLUGIN_DIR . 'templates/quote-search.php';
+            return ob_get_clean();
+        }
+
+        if ('deleted' === $quote_view) {
+            $quote_list_context = 'deleted';
+            $quote_list_result = OFQB_Quotes::get_quote_list(
+                array_merge(
+                    self::get_quote_list_args(),
+                    array('status_filter' => 'deleted')
+                )
+            );
+            $quote_creators = OFQB_Quotes::get_quote_creators('deleted');
+
+            ob_start();
+            include OFQB_PLUGIN_DIR . 'templates/quote-search.php';
             return ob_get_clean();
         }
 
         if ('mine' === $quote_view) {
-            $quotes_for_table = OFQB_Quotes::get_quote_list(array(
-                'created_by_user_id' => get_current_user_id(),
-                'limit' => 100,
-            ));
+            $quote_list_context = 'mine';
+            $quote_list_result = OFQB_Quotes::get_quote_list(
+                array_merge(
+                    self::get_quote_list_args(),
+                    array('created_by_user_id' => get_current_user_id())
+                )
+            );
+
             ob_start();
-            include OFQB_PLUGIN_DIR . 'templates/my-quotes-placeholder.php';
+            include OFQB_PLUGIN_DIR . 'templates/my-quotes.php';
             return ob_get_clean();
         }
 
@@ -171,6 +203,21 @@ class OFQB_Shortcode
             array(),
             file_exists($js_path) ? filemtime($js_path) : OFQB_VERSION,
             true
+        );
+    }
+
+    private static function get_quote_list_args()
+    {
+        $sort = !empty($_GET['ofqb_sort']) ? sanitize_key(wp_unslash($_GET['ofqb_sort'])) : 'date';
+        $order = !empty($_GET['ofqb_order']) ? sanitize_key(wp_unslash($_GET['ofqb_order'])) : 'desc';
+
+        return array(
+            'search' => !empty($_GET['ofqb_search']) ? sanitize_text_field(wp_unslash($_GET['ofqb_search'])) : '',
+            'sort' => $sort,
+            'order' => 'asc' === $order ? 'asc' : 'desc',
+            'created_by_filter' => !empty($_GET['ofqb_created_by']) ? absint(wp_unslash($_GET['ofqb_created_by'])) : 0,
+            'page' => !empty($_GET['ofqb_page']) ? absint(wp_unslash($_GET['ofqb_page'])) : 1,
+            'per_page' => 20,
         );
     }
 }

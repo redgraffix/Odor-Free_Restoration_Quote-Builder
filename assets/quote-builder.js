@@ -334,9 +334,15 @@
             var removeButton = event.target.closest('[data-ofqb-remove-row]');
             var printButton = event.target.closest('[data-ofqb-print-quote]');
             var safeLeave = event.target.closest('[data-ofqb-safe-leave]');
+            var confirmButton = event.target.closest('[data-ofqb-confirm]');
 
             if (safeLeave) {
                 allowLeave = true;
+            }
+
+            if (confirmButton && !window.confirm(confirmButton.getAttribute('data-ofqb-confirm'))) {
+                event.preventDefault();
+                return;
             }
 
             if (serviceButton) {
