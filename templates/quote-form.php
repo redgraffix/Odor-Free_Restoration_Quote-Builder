@@ -9,10 +9,10 @@ $salesperson_email = isset($current_user->user_email) ? $current_user->user_emai
 ?>
 
 <div class="odorfree-quote-builder" data-ofqb>
-    <div class="ofqb-header">
+        <div class="ofqb-header">
         <div>
             <h2>Service Quote Form - Quote # Pending</h2>
-            <p>Build a service quote with labor, materials, tax, terms, and approval details.</p>
+            <p>Build a service quote with labor, materials, tax, and editable terms.</p>
         </div>
         <div class="ofqb-sales-meta">
             <p><strong>Sales Person:</strong> <?php echo esc_html($salesperson_name); ?></p>
@@ -171,29 +171,11 @@ $salesperson_email = isset($current_user->user_email) ? $current_user->user_emai
 
         <section class="ofqb-section ofqb-summary-section" aria-labelledby="ofqb-summary-heading">
             <div>
-                <h3 id="ofqb-summary-heading">4. Terms and Approval</h3>
+                <h3 id="ofqb-summary-heading">4. Terms and Conditions</h3>
                 <label class="ofqb-terms-field">
                     <span>Terms and Conditions</span>
                     <textarea name="terms" rows="7"><?php echo esc_textarea(OFQB_Quotes::get_default_terms()); ?></textarea>
                 </label>
-
-                <div class="ofqb-approval-box">
-                    <h4>Approval</h4>
-                    <div class="ofqb-grid">
-                        <label class="ofqb-grid-wide">
-                            <span>Approved By</span>
-                            <input type="text" name="approved_by">
-                        </label>
-                        <label>
-                            <span>Signature</span>
-                            <input type="text" name="approval_signature">
-                        </label>
-                        <label>
-                            <span>Date</span>
-                            <input type="date" name="approval_date">
-                        </label>
-                    </div>
-                </div>
             </div>
 
             <aside class="ofqb-totals" aria-label="Quote totals">

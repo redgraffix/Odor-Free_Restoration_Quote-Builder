@@ -6,6 +6,8 @@ if (!defined('ABSPATH')) {
 
 class OFQB_Quotes
 {
+    const DEFAULT_BCC_EMAIL = 'sales@odorfreerestoration.com';
+
     public static function get_recent_quotes($limit = 5)
     {
         global $wpdb;
@@ -57,6 +59,11 @@ class OFQB_Quotes
     public static function get_default_terms()
     {
         return "Prefilled standard terms can be edited for each client.\n\nAcceptance of this quote authorizes Odor-Free Restoration LLC to perform the listed services and supply the listed materials.";
+    }
+
+    public static function get_quote_email_bcc()
+    {
+        return apply_filters('ofqb_quote_email_bcc', self::DEFAULT_BCC_EMAIL);
     }
 
     private static function table_exists($table)
