@@ -78,51 +78,55 @@ $default_email_message = OFQB_Quotes::get_default_email_message($saved_quote->qu
                 </div>
             </section>
 
-            <section class="ofqb-preview-table-section">
-                <table class="ofqb-preview-table">
-                    <thead>
-                        <tr>
-                            <th>Service Description</th>
-                            <th>Hrs</th>
-                            <th>Rate</th>
-                            <th>Total</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($saved_services as $service) : ?>
+            <?php if (!empty($saved_services)) : ?>
+                <section class="ofqb-preview-table-section">
+                    <table class="ofqb-preview-table">
+                        <thead>
                             <tr>
-                                <td><?php echo nl2br(esc_html($service->service_description)); ?></td>
-                                <td><?php echo esc_html(rtrim(rtrim(number_format((float) $service->hours, 2, '.', ''), '0'), '.')); ?></td>
-                                <td><?php echo esc_html(OFQB_Quotes::money($service->rate)); ?></td>
-                                <td><?php echo esc_html(OFQB_Quotes::money($service->line_total)); ?></td>
+                                <th>Service Description</th>
+                                <th>Hrs</th>
+                                <th>Rate</th>
+                                <th>Total</th>
                             </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
-            </section>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($saved_services as $service) : ?>
+                                <tr>
+                                    <td><?php echo nl2br(esc_html($service->service_description)); ?></td>
+                                    <td><?php echo esc_html(rtrim(rtrim(number_format((float) $service->hours, 2, '.', ''), '0'), '.')); ?></td>
+                                    <td><?php echo esc_html(OFQB_Quotes::money($service->rate)); ?></td>
+                                    <td><?php echo esc_html(OFQB_Quotes::money($service->line_total)); ?></td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </section>
+            <?php endif; ?>
 
-            <section class="ofqb-preview-table-section">
-                <table class="ofqb-preview-table">
-                    <thead>
-                        <tr>
-                            <th>Materials</th>
-                            <th>Unit Cost</th>
-                            <th>QTY</th>
-                            <th>Total</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($saved_materials as $material) : ?>
+            <?php if (!empty($saved_materials)) : ?>
+                <section class="ofqb-preview-table-section">
+                    <table class="ofqb-preview-table">
+                        <thead>
                             <tr>
-                                <td><?php echo esc_html($material->material_description); ?></td>
-                                <td><?php echo esc_html(OFQB_Quotes::money($material->unit_cost)); ?></td>
-                                <td><?php echo esc_html(rtrim(rtrim(number_format((float) $material->quantity, 2, '.', ''), '0'), '.')); ?></td>
-                                <td><?php echo esc_html(OFQB_Quotes::money($material->line_total)); ?></td>
+                                <th>Materials</th>
+                                <th>Unit Cost</th>
+                                <th>QTY</th>
+                                <th>Total</th>
                             </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
-            </section>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($saved_materials as $material) : ?>
+                                <tr>
+                                    <td><?php echo esc_html($material->material_description); ?></td>
+                                    <td><?php echo esc_html(OFQB_Quotes::money($material->unit_cost)); ?></td>
+                                    <td><?php echo esc_html(rtrim(rtrim(number_format((float) $material->quantity, 2, '.', ''), '0'), '.')); ?></td>
+                                    <td><?php echo esc_html(OFQB_Quotes::money($material->line_total)); ?></td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </section>
+            <?php endif; ?>
 
             <section class="ofqb-preview-bottom">
                 <div class="ofqb-preview-terms">

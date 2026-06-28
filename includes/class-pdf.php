@@ -334,6 +334,10 @@ class OFQB_PDF
         };
 
         $draw_rows = function ($rows, $kind, $y) use ($pdf, $left, $table_width, $bottom_limit, $gray, &$content, $new_content_page, $draw_table_header) {
+            if (empty($rows)) {
+                return $y;
+            }
+
             $widths = array(302, 70, 70, 62);
             $headers = 'service' === $kind ? array('Service Description', 'Hrs', 'Rate', 'Total') : array('Materials', 'Unit Cost', 'QTY', 'Total');
             $y = $draw_table_header($headers[0], $headers, $widths, $y);
@@ -399,6 +403,7 @@ class OFQB_PDF
         $content .= $pdf->rect($totals_x, $totals_y, 120, 28, $light_blue, null);
         $content .= $pdf->rect($totals_x, $totals_y + 28, 120, 28, $light_blue, null);
         $content .= $pdf->rect($totals_x, $totals_y + 56, 120, 28, $blue, null);
+        $content .= $pdf->rect($totals_x + 120, $totals_y + 28, 72, 28, $gray, null);
         $content .= $pdf->text('Subtotal', $totals_x + 72, $totals_y + 17, 8, 'B', $blue);
         $content .= $pdf->text('Tax Rate', $totals_x + 72, $totals_y + 45, 8, 'B', $blue);
         $content .= $pdf->text('Total', $totals_x + 86, $totals_y + 73, 8, 'B', array(255, 255, 255));
