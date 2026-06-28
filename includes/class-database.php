@@ -6,7 +6,7 @@ if (!defined('ABSPATH')) {
 
 class OFQB_Database
 {
-    const SCHEMA_VERSION = '0.1.0';
+    const SCHEMA_VERSION = '0.2.0';
 
     public static function activate()
     {
@@ -44,6 +44,9 @@ class OFQB_Database
             customer_tax_id varchar(100) DEFAULT '' NOT NULL,
             terms text NULL,
             notes text NULL,
+            approved_by varchar(190) DEFAULT '' NOT NULL,
+            approval_signature varchar(190) DEFAULT '' NOT NULL,
+            approval_date varchar(50) DEFAULT '' NOT NULL,
             subtotal decimal(12,2) NOT NULL DEFAULT 0.00,
             tax_rate decimal(8,4) NOT NULL DEFAULT 0.0000,
             tax_amount decimal(12,2) NOT NULL DEFAULT 0.00,

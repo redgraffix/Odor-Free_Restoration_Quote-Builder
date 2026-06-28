@@ -50,7 +50,7 @@ class OFQB_Shortcode
 
         if ('create' === $quote_view) {
             ob_start();
-            include OFQB_PLUGIN_DIR . 'templates/quote-form-placeholder.php';
+            include OFQB_PLUGIN_DIR . 'templates/quote-form.php';
             return ob_get_clean();
         }
 
