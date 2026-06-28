@@ -15,6 +15,7 @@ $can_modify_quote = OFQB_Quotes::current_user_can_modify_quote($saved_quote);
 $quote_header_path = OFQB_PLUGIN_DIR . 'assets/images/quote-header.jpg';
 $quote_header_version = file_exists($quote_header_path) ? filemtime($quote_header_path) : OFQB_VERSION;
 $preview_terms = trim(str_replace("Prefilled standard terms can be edited for each client.\n\n", '', (string) $saved_quote->terms));
+$default_email_message = OFQB_Quotes::get_default_email_message($saved_quote->quote_number);
 ?>
 
 <div class="odorfree-quote-builder" data-ofqb>
@@ -159,6 +160,7 @@ $preview_terms = trim(str_replace("Prefilled standard terms can be edited for ea
     </div>
 
     <div class="ofqb-preview-actions">
+        <p class="ofqb-action-status" data-ofqb-action-status></p>
         <div class="ofqb-preview-meta-panel" aria-label="Quote metadata">
             <p><strong>Quote Number:</strong> <?php echo esc_html($saved_quote->quote_number); ?></p>
             <p><strong>Created:</strong> <?php echo esc_html(date_i18n(get_option('date_format') . ' ' . get_option('time_format'), strtotime($saved_quote->created_at))); ?></p>
@@ -182,7 +184,11 @@ $preview_terms = trim(str_replace("Prefilled standard terms can be edited for ea
             <?php else : ?>
                 <a class="ofqb-button ofqb-button--secondary" href="<?php echo esc_url(wp_nonce_url(admin_url('admin-post.php?action=ofqb_download_pdf&quote_id=' . (int) $saved_quote->id), 'ofqb_download_pdf_' . (int) $saved_quote->id)); ?>">Download PDF</a>
             <?php endif; ?>
-            <button type="button" class="ofqb-button ofqb-button--secondary" disabled>Email PDF Soon</button>
+            <?php if ('draft' === $saved_quote->status || 'deleted' === $saved_quote->status) : ?>
+                <button type="button" class="ofqb-button ofqb-button--secondary" disabled>Email PDF</button>
+            <?php else : ?>
+                <button type="button" class="ofqb-button ofqb-button--secondary" data-ofqb-open-email-modal>Email PDF</button>
+            <?php endif; ?>
             <?php if ($can_modify_quote) : ?>
                 <?php if ('deleted' === $saved_quote->status) : ?>
                     <form action="" method="post">
@@ -200,6 +206,44 @@ $preview_terms = trim(str_replace("Prefilled standard terms can be edited for ea
                 <?php endif; ?>
             <?php endif; ?>
             <a class="ofqb-button ofqb-button--secondary" href="<?php echo esc_url($base_url); ?>">Home</a>
+        </div>
+    </div>
+
+    <div class="ofqb-modal" data-ofqb-email-modal hidden>
+        <div class="ofqb-modal__panel" role="dialog" aria-modal="true" aria-labelledby="ofqb-email-modal-title">
+            <h3 id="ofqb-email-modal-title">Email PDF</h3>
+            <form data-ofqb-email-form>
+                <input type="hidden" name="quote_id" value="<?php echo esc_attr((int) $saved_quote->id); ?>">
+                <input type="hidden" name="nonce" value="<?php echo esc_attr(wp_create_nonce('ofqb_email_pdf_' . (int) $saved_quote->id)); ?>">
+
+                <label>
+                    <span>Email To*</span>
+                    <input type="text" name="email_to" value="<?php echo esc_attr($saved_quote->customer_email); ?>" placeholder="customer@example.com, second@example.com" required>
+                    <small>Separate multiple email addresses with commas.</small>
+                </label>
+
+                <label>
+                    <span>CC</span>
+                    <input type="text" name="email_cc" value="" placeholder="optional@example.com">
+                </label>
+
+                <label>
+                    <span>Subject</span>
+                    <input type="text" name="email_subject" value="<?php echo esc_attr('Odor-Free Restoration Service Quote #' . $saved_quote->quote_number . ' for Review'); ?>">
+                </label>
+
+                <label>
+                    <span>Message</span>
+                    <textarea name="email_message" rows="8"><?php echo esc_textarea($default_email_message); ?></textarea>
+                </label>
+
+                <p class="ofqb-modal__status" data-ofqb-email-status></p>
+
+                <div class="ofqb-modal__actions">
+                    <button type="submit" class="ofqb-button">Send</button>
+                    <button type="button" class="ofqb-button ofqb-button--danger" data-ofqb-close-email-modal>Cancel</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>

@@ -177,6 +177,29 @@ class OFQB_Quotes
         return "Dear Customer,\n\nPlease find your Odor-Free Restoration service quote, #{$quote_number}, attached for review.\n\nIf you have any questions, please contact us at 866-4-NO-ODOR (466-6367).\n\nThank you,\nOdor-Free Restoration LLC";
     }
 
+    public static function mark_quote_sent($quote_id)
+    {
+        global $wpdb;
+
+        $bundle = self::get_quote_with_items($quote_id);
+
+        if (!$bundle || !self::current_user_can_modify_quote($bundle['quote'])) {
+            return false;
+        }
+
+        return false !== $wpdb->update(
+            $wpdb->prefix . 'ofqb_quotes',
+            array(
+                'status' => 'sent',
+                'updated_at' => current_time('mysql'),
+                'updated_by_user_id' => get_current_user_id(),
+            ),
+            array('id' => $quote_id),
+            array('%s', '%s', '%d'),
+            array('%d')
+        );
+    }
+
     public static function get_quote_list($args = array())
     {
         global $wpdb;

@@ -9,6 +9,7 @@ class OFQB_PDF
     public static function init()
     {
         add_action('admin_post_ofqb_download_pdf', array(__CLASS__, 'handle_download'));
+        add_action('wp_ajax_ofqb_email_pdf', array(__CLASS__, 'ajax_email_pdf'));
     }
 
     public static function handle_download()
@@ -35,6 +36,90 @@ class OFQB_PDF
         header('Content-Length: ' . filesize($pdf_path));
         readfile($pdf_path);
         exit;
+    }
+
+    public static function ajax_email_pdf()
+    {
+        if (!is_user_logged_in() || !OFQB_Roles::current_user_can_create_quotes()) {
+            wp_send_json_error(array('message' => 'Please log in to email quote PDFs.'), 403);
+        }
+
+        $quote_id = !empty($_POST['quote_id']) ? absint(wp_unslash($_POST['quote_id'])) : 0;
+
+        if (!$quote_id || empty($_POST['nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])), 'ofqb_email_pdf_' . $quote_id)) {
+            wp_send_json_error(array('message' => 'Quote PDF email could not be verified. Please refresh the page and try again.'), 403);
+        }
+
+        $to = self::sanitize_email_list(!empty($_POST['email_to']) ? wp_unslash($_POST['email_to']) : '');
+        $cc = self::sanitize_email_list(!empty($_POST['email_cc']) ? wp_unslash($_POST['email_cc']) : '');
+
+        if (is_wp_error($to)) {
+            wp_send_json_error(array('message' => $to->get_error_message()), 400);
+        }
+
+        if (!$to) {
+            wp_send_json_error(array('message' => 'Please enter at least one To email address.'), 400);
+        }
+
+        if (is_wp_error($cc)) {
+            wp_send_json_error(array('message' => $cc->get_error_message()), 400);
+        }
+
+        $quote_bundle = OFQB_Quotes::get_quote_with_items($quote_id);
+
+        if (!$quote_bundle) {
+            wp_send_json_error(array('message' => 'Quote could not be found.'), 404);
+        }
+
+        $quote = $quote_bundle['quote'];
+
+        if (!OFQB_Quotes::current_user_can_modify_quote($quote)) {
+            wp_send_json_error(array('message' => 'You can only email quotes you created.'), 403);
+        }
+
+        if ('draft' === $quote->status) {
+            wp_send_json_error(array('message' => 'Draft quotes must be completed before they can be emailed.'), 400);
+        }
+
+        if ('deleted' === $quote->status) {
+            wp_send_json_error(array('message' => 'Deleted quotes must be restored before they can be emailed.'), 400);
+        }
+
+        $subject = !empty($_POST['email_subject']) ? sanitize_text_field(wp_unslash($_POST['email_subject'])) : '';
+        $message = !empty($_POST['email_message']) ? sanitize_textarea_field(wp_unslash($_POST['email_message'])) : '';
+
+        if ('' === trim($subject)) {
+            $subject = 'Odor-Free Restoration Service Quote #' . $quote->quote_number . ' for Review';
+        }
+
+        if ('' === trim($message)) {
+            $message = OFQB_Quotes::get_default_email_message($quote->quote_number);
+        }
+
+        $pdf_path = self::generate_pdf_file($quote_id);
+
+        if (is_wp_error($pdf_path)) {
+            wp_send_json_error(array('message' => $pdf_path->get_error_message()), 500);
+        }
+
+        $headers = array(
+            'Bcc: ' . OFQB_Quotes::get_quote_email_bcc(),
+            'Content-Type: text/html; charset=UTF-8',
+        );
+
+        if ($cc) {
+            $headers[] = 'Cc: ' . implode(', ', $cc);
+        }
+
+        $sent = wp_mail($to, $subject, self::format_email_message_html($message), $headers, array($pdf_path));
+
+        if (!$sent) {
+            wp_send_json_error(array('message' => 'The quote email could not be sent. Please check FluentSMTP settings.'), 500);
+        }
+
+        OFQB_Quotes::mark_quote_sent($quote_id);
+
+        wp_send_json_success(array('message' => 'Quote PDF was emailed.'));
     }
 
     public static function generate_pdf_file($quote_id)
@@ -79,6 +164,46 @@ class OFQB_PDF
         }
 
         return $pdf_path;
+    }
+
+    private static function sanitize_email_list($raw)
+    {
+        $emails = array_filter(array_map('trim', explode(',', (string) $raw)));
+        $valid = array();
+
+        foreach ($emails as $email) {
+            $sanitized = sanitize_email($email);
+
+            if (!$sanitized || !is_email($sanitized)) {
+                return new WP_Error('ofqb_invalid_email_list', 'Please enter valid email addresses separated by commas.');
+            }
+
+            $valid[] = $sanitized;
+        }
+
+        return array_values(array_unique($valid));
+    }
+
+    private static function format_email_message_html($message)
+    {
+        $message = trim((string) $message);
+        $header_url = OFQB_PLUGIN_URL . 'assets/images/quote-header.jpg';
+        $message_html = nl2br(esc_html($message));
+
+        return '<div style="margin:0;padding:0;background:#f5f7f8;">'
+            . '<div style="max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #d8dee4;font-family:Arial, Helvetica, sans-serif;color:#111;">'
+            . '<div style="padding:0;border-bottom:4px solid #1f3e73;text-align:left;">'
+            . '<img src="' . esc_url($header_url) . '" alt="Odor-Free Restoration LLC" style="display:block;width:100%;height:auto;border:0;">'
+            . '</div>'
+            . '<div style="padding:22px;font-size:14px;line-height:1.55;">' . $message_html . '</div>'
+            . '<div style="border-top:1px solid #d8dee4;margin:0 22px;"></div>'
+            . '<div style="padding:18px 22px 22px;font-size:13px;line-height:1.5;color:#1f3e73;">'
+            . '<strong>Odor-Free Restoration LLC</strong><br>'
+            . 'Permanent odor removal, not odor masking.<br>'
+            . '<a href="tel:18664666367" style="color:#1f3e73;text-decoration:none;">866-4-NO-ODOR (466-6367)</a>'
+            . '</div>'
+            . '</div>'
+            . '</div>';
     }
 
     private static function render_pdf($quote, $services, $materials)

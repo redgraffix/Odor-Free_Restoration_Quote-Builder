@@ -204,6 +204,14 @@ class OFQB_Shortcode
             file_exists($js_path) ? filemtime($js_path) : OFQB_VERSION,
             true
         );
+
+        wp_localize_script(
+            'ofqb-quote-builder',
+            'ofqbSettings',
+            array(
+                'ajaxUrl' => admin_url('admin-ajax.php'),
+            )
+        );
     }
 
     private static function get_quote_list_args()

@@ -33,6 +33,169 @@
         return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
     }
 
+    function parseEmailList(value) {
+        return (value || '').split(',').map(function (email) {
+            return email.trim();
+        }).filter(Boolean);
+    }
+
+    function isValidEmailList(value, allowEmpty) {
+        var emails = parseEmailList(value);
+
+        if (!emails.length) {
+            return Boolean(allowEmpty);
+        }
+
+        return emails.every(isValidEmail);
+    }
+
+    function setButtonBusy(button, text) {
+        if (!button) {
+            return;
+        }
+
+        if (!button.getAttribute('data-ofqb-original-text')) {
+            button.setAttribute('data-ofqb-original-text', button.textContent);
+        }
+
+        button.textContent = text;
+        button.setAttribute('aria-busy', 'true');
+
+        if ('disabled' in button) {
+            button.disabled = true;
+        }
+    }
+
+    function setButtonReady(button) {
+        if (!button) {
+            return;
+        }
+
+        if (button.getAttribute('data-ofqb-original-text')) {
+            button.textContent = button.getAttribute('data-ofqb-original-text');
+        }
+
+        button.removeAttribute('aria-busy');
+
+        if ('disabled' in button) {
+            button.disabled = false;
+        }
+    }
+
+    function setActionStatus(builder, message) {
+        var status = builder.querySelector('[data-ofqb-action-status]');
+
+        if (!status) {
+            return;
+        }
+
+        status.textContent = message || '';
+    }
+
+    function setEmailStatus(builder, message, isError) {
+        var status = builder.querySelector('[data-ofqb-email-status]');
+
+        if (!status) {
+            return;
+        }
+
+        status.textContent = message || '';
+        status.classList.toggle('ofqb-modal__status--error', Boolean(isError));
+        status.classList.toggle('ofqb-modal__status--success', Boolean(message && !isError));
+    }
+
+    function openEmailModal(builder) {
+        var modal = builder.querySelector('[data-ofqb-email-modal]');
+        var email = modal && modal.querySelector('[name="email_to"]');
+
+        if (!modal) {
+            return;
+        }
+
+        setEmailStatus(builder, '', false);
+        modal.hidden = false;
+
+        if (email) {
+            email.focus();
+            email.select();
+        }
+    }
+
+    function closeEmailModal(builder) {
+        var modal = builder.querySelector('[data-ofqb-email-modal]');
+
+        if (!modal) {
+            return;
+        }
+
+        modal.hidden = true;
+        setEmailStatus(builder, '', false);
+    }
+
+    function sendQuoteEmail(builder, form) {
+        var settings = window.ofqbSettings || {};
+        var button = form.querySelector('[type="submit"]');
+        var email = form.querySelector('[name="email_to"]');
+        var cc = form.querySelector('[name="email_cc"]');
+        var recipients = parseEmailList(email ? email.value : '');
+        var body = new URLSearchParams(new FormData(form));
+
+        if (!settings.ajaxUrl) {
+            setEmailStatus(builder, 'Email is not available. Please refresh the page and try again.', true);
+            return;
+        }
+
+        if (!email || !isValidEmailList(email.value, false)) {
+            setEmailStatus(builder, 'Please enter valid To email addresses separated by commas.', true);
+
+            if (email) {
+                email.focus();
+            }
+
+            return;
+        }
+
+        if (cc && !isValidEmailList(cc.value, true)) {
+            setEmailStatus(builder, 'Please enter valid CC email addresses separated by commas.', true);
+            cc.focus();
+            return;
+        }
+
+        body.append('action', 'ofqb_email_pdf');
+        setButtonBusy(button, 'Sending...');
+        setEmailStatus(builder, 'Creating PDF and sending email...', false);
+
+        fetch(settings.ajaxUrl, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+            },
+            body: body.toString()
+        })
+            .then(function (response) {
+                return response.json();
+            })
+            .then(function (response) {
+                if (!response || !response.success) {
+                    throw new Error(response && response.data && response.data.message ? response.data.message : 'The quote email could not be sent.');
+                }
+
+                setEmailStatus(builder, response.data.message || 'Quote PDF was emailed.', false);
+                setActionStatus(builder, 'Quote emailed to ' + recipients.join(', ') + '.');
+
+                window.setTimeout(function () {
+                    closeEmailModal(builder);
+                }, 1600);
+            })
+            .catch(function (error) {
+                setEmailStatus(builder, error.message, true);
+            })
+            .finally(function () {
+                setButtonReady(button);
+            });
+    }
+
     function clearFormAlert(builder) {
         var alert = builder.querySelector('[data-ofqb-form-alert]');
 
@@ -333,6 +496,8 @@
             var materialButton = event.target.closest('[data-ofqb-add-material]');
             var removeButton = event.target.closest('[data-ofqb-remove-row]');
             var printButton = event.target.closest('[data-ofqb-print-quote]');
+            var openEmailButton = event.target.closest('[data-ofqb-open-email-modal]');
+            var closeEmailButton = event.target.closest('[data-ofqb-close-email-modal]');
             var safeLeave = event.target.closest('[data-ofqb-safe-leave]');
             var confirmButton = event.target.closest('[data-ofqb-confirm]');
 
@@ -364,6 +529,16 @@
                 event.preventDefault();
                 window.print();
             }
+
+            if (openEmailButton) {
+                event.preventDefault();
+                openEmailModal(builder);
+            }
+
+            if (closeEmailButton) {
+                event.preventDefault();
+                closeEmailModal(builder);
+            }
         });
 
         builder.addEventListener('input', function (event) {
@@ -389,6 +564,12 @@
         });
 
         builder.addEventListener('submit', function (event) {
+            if (event.target.matches('[data-ofqb-email-form]')) {
+                event.preventDefault();
+                sendQuoteEmail(builder, event.target);
+                return;
+            }
+
             if (!event.target.matches('[data-ofqb-form]')) {
                 return;
             }
