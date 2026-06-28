@@ -377,7 +377,7 @@
 .ofqb-actions {
     display: grid;
     gap: 12px;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .ofqb-actions .ofqb-button {
@@ -387,6 +387,34 @@
 .ofqb-button--small {
     min-width: 126px;
     padding: 9px 14px;
+}
+
+.ofqb-readiness {
+    background: #fff8d6;
+    border: 1px solid #f4c400;
+    border-radius: 8px;
+    margin-top: 18px;
+    padding: 14px 16px;
+}
+
+.ofqb-readiness--ready {
+    background: #ecfff4;
+    border-color: var(--ofqb-green);
+}
+
+.ofqb-readiness__heading {
+    color: #111;
+    margin-bottom: 6px;
+}
+
+.ofqb-readiness ul {
+    margin: 0;
+    padding-left: 22px;
+}
+
+.ofqb-readiness li {
+    font-size: 14px;
+    line-height: 1.35;
 }
 
 .screen-reader-text {
@@ -518,6 +546,7 @@
 }
 
 .ofqb-quote-preview {
+    -webkit-print-color-adjust: exact;
     background: #fff;
     border: 1px solid var(--ofqb-border);
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
@@ -529,6 +558,7 @@
     max-width: 100%;
     min-height: 792px;
     width: 612px;
+    print-color-adjust: exact;
 }
 
 .ofqb-preview-header img {
@@ -930,6 +960,8 @@
     }
 
     body * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
         visibility: hidden !important;
     }
 
@@ -950,11 +982,23 @@
     }
 
     .ofqb-quote-preview {
+        -webkit-print-color-adjust: exact !important;
         border: 0 !important;
         box-shadow: none !important;
         margin: 0 auto !important;
         min-height: 0 !important;
+        print-color-adjust: exact !important;
         width: 7.5in !important;
+    }
+
+    .ofqb-preview-table th,
+    .ofqb-preview-table tbody tr:nth-child(even) td,
+    .ofqb-preview-totals span,
+    .ofqb-preview-totals div:nth-child(2) strong,
+    .ofqb-preview-total-grand span,
+    .ofqb-preview-footer {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
     }
 
     .ofqb-preview-meta {

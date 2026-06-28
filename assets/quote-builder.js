@@ -29,6 +29,151 @@
         return parts.join('-');
     }
 
+    function isValidEmail(value) {
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+    }
+
+    function clearFormAlert(builder) {
+        var alert = builder.querySelector('[data-ofqb-form-alert]');
+
+        if (!alert) {
+            return;
+        }
+
+        alert.textContent = '';
+        alert.hidden = true;
+    }
+
+    function showFormAlert(builder, message) {
+        var alert = builder.querySelector('[data-ofqb-form-alert]');
+
+        if (!alert) {
+            return;
+        }
+
+        alert.textContent = message;
+        alert.hidden = false;
+        alert.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    function getFieldLabel(field) {
+        var label = field ? field.closest('label') : null;
+        var text = label ? label.querySelector('span') : null;
+        return text ? text.textContent.replace('*', '').trim() : 'Required field';
+    }
+
+    function hasQuoteLine(builder) {
+        var hasService = Array.prototype.some.call(builder.querySelectorAll('[data-ofqb-service-row]'), function (row) {
+            var description = row.querySelector('[name*="[description]"]');
+            return description && description.value.trim();
+        });
+        var hasMaterial = Array.prototype.some.call(builder.querySelectorAll('[data-ofqb-material-row]'), function (row) {
+            var description = row.querySelector('[name*="[description]"]');
+            return description && description.value.trim();
+        });
+
+        return hasService || hasMaterial;
+    }
+
+    function getFormProblems(builder) {
+        var requiredFields = builder.querySelectorAll('[data-ofqb-required]');
+        var emailFields = builder.querySelectorAll('[data-ofqb-email]');
+        var phoneFields = builder.querySelectorAll('[data-ofqb-phone]');
+
+        for (var i = 0; i < requiredFields.length; i += 1) {
+            if (!requiredFields[i].value.trim()) {
+                return {
+                    field: requiredFields[i],
+                    message: 'Please fill out ' + getFieldLabel(requiredFields[i]) + ' before generating the quote.'
+                };
+            }
+        }
+
+        for (var emailIndex = 0; emailIndex < emailFields.length; emailIndex += 1) {
+            if (!isValidEmail(emailFields[emailIndex].value.trim())) {
+                return {
+                    field: emailFields[emailIndex],
+                    message: 'Please enter a valid ' + getFieldLabel(emailFields[emailIndex]) + ' email address.'
+                };
+            }
+        }
+
+        for (var phoneIndex = 0; phoneIndex < phoneFields.length; phoneIndex += 1) {
+            if (!/^\d{3}-\d{3}-\d{4}$/.test(phoneFields[phoneIndex].value.trim())) {
+                return {
+                    field: phoneFields[phoneIndex],
+                    message: 'Please enter ' + getFieldLabel(phoneFields[phoneIndex]) + ' in 000-000-0000 format.'
+                };
+            }
+        }
+
+        if (!hasQuoteLine(builder)) {
+            return {
+                field: builder.querySelector('[data-ofqb-service-row] textarea, [data-ofqb-material-row] input[type="text"]'),
+                message: 'Please add at least one service or material line before generating the quote.'
+            };
+        }
+
+        return null;
+    }
+
+    function getReadinessItems(builder) {
+        var items = [];
+        var requiredFields = builder.querySelectorAll('[data-ofqb-required]');
+        var emailFields = builder.querySelectorAll('[data-ofqb-email]');
+        var phoneFields = builder.querySelectorAll('[data-ofqb-phone]');
+
+        requiredFields.forEach(function (field) {
+            if (!field.value.trim()) {
+                items.push('Missing ' + getFieldLabel(field));
+            }
+        });
+
+        emailFields.forEach(function (field) {
+            if (field.value.trim() && !isValidEmail(field.value.trim())) {
+                items.push(getFieldLabel(field) + ' needs a valid email address');
+            }
+        });
+
+        phoneFields.forEach(function (field) {
+            if (field.value.trim() && !/^\d{3}-\d{3}-\d{4}$/.test(field.value.trim())) {
+                items.push(getFieldLabel(field) + ' needs 000-000-0000 format');
+            }
+        });
+
+        if (!hasQuoteLine(builder)) {
+            items.push('Add at least one service or material line');
+        }
+
+        return items;
+    }
+
+    function updateReadiness(builder) {
+        var panel = builder.querySelector('[data-ofqb-readiness]');
+        var list = builder.querySelector('[data-ofqb-readiness-list]');
+        var items = getReadinessItems(builder);
+
+        if (!panel || !list) {
+            return;
+        }
+
+        panel.classList.toggle('ofqb-readiness--ready', items.length === 0);
+        list.innerHTML = '';
+
+        if (!items.length) {
+            var ready = document.createElement('li');
+            ready.textContent = 'Ready to generate';
+            list.appendChild(ready);
+            return;
+        }
+
+        items.forEach(function (item) {
+            var li = document.createElement('li');
+            li.textContent = item;
+            list.appendChild(li);
+        });
+    }
+
     function renumberRows(builder) {
         builder.querySelectorAll('[data-ofqb-service-row]').forEach(function (row, index) {
             var description = row.querySelector('[name*="[description]"]');
@@ -97,6 +242,7 @@
         tbody.appendChild(clone);
         renumberRows(builder);
         updateTotals(builder);
+        updateReadiness(builder);
     }
 
     function removeRow(builder, row) {
@@ -114,6 +260,7 @@
 
         renumberRows(builder);
         updateTotals(builder);
+        updateReadiness(builder);
     }
 
     function updateTotals(builder) {
@@ -166,11 +313,31 @@
     }
 
     function initBuilder(builder) {
+        var form = builder.querySelector('[data-ofqb-form]');
+        var formIsDirty = false;
+        var allowLeave = false;
+
+        if (form) {
+            window.addEventListener('beforeunload', function (event) {
+                if (!formIsDirty || allowLeave) {
+                    return;
+                }
+
+                event.preventDefault();
+                event.returnValue = '';
+            });
+        }
+
         builder.addEventListener('click', function (event) {
             var serviceButton = event.target.closest('[data-ofqb-add-service]');
             var materialButton = event.target.closest('[data-ofqb-add-material]');
             var removeButton = event.target.closest('[data-ofqb-remove-row]');
             var printButton = event.target.closest('[data-ofqb-print-quote]');
+            var safeLeave = event.target.closest('[data-ofqb-safe-leave]');
+
+            if (safeLeave) {
+                allowLeave = true;
+            }
 
             if (serviceButton) {
                 event.preventDefault();
@@ -194,6 +361,10 @@
         });
 
         builder.addEventListener('input', function (event) {
+            if (event.target.closest('[data-ofqb-form]')) {
+                formIsDirty = true;
+            }
+
             if (event.target.matches('[data-ofqb-phone]')) {
                 event.target.value = formatPhone(event.target.value);
             }
@@ -207,9 +378,37 @@
             ) {
                 updateTotals(builder);
             }
+
+            updateReadiness(builder);
+        });
+
+        builder.addEventListener('submit', function (event) {
+            if (!event.target.matches('[data-ofqb-form]')) {
+                return;
+            }
+
+            var submitIntent = event.submitter && event.submitter.name === 'ofqb_submit_intent' ? event.submitter.value : 'generate';
+            var isDraftSave = submitIntent === 'draft';
+            var problems = getFormProblems(builder);
+
+            clearFormAlert(builder);
+
+            if (!isDraftSave && problems) {
+                event.preventDefault();
+                event.stopPropagation();
+                showFormAlert(builder, problems.message);
+
+                if (problems.field) {
+                    problems.field.focus();
+                }
+                return;
+            }
+
+            allowLeave = true;
         });
 
         updateTotals(builder);
+        updateReadiness(builder);
     }
 
     document.documentElement.classList.add('ofqb-js');

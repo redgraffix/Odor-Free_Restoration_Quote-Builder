@@ -48,6 +48,7 @@ $field_value = function ($field, $default = '') use ($is_editing_quote, $editing
         <?php if ($is_editing_quote) : ?>
             <input type="hidden" name="ofqb_existing_quote_id" value="<?php echo esc_attr((int) $editing_quote->id); ?>">
         <?php endif; ?>
+        <div class="ofqb-message ofqb-message--error" data-ofqb-form-alert hidden></div>
 
         <section class="ofqb-section" aria-labelledby="ofqb-client-heading">
             <h3 id="ofqb-client-heading">1. Client Information</h3>
@@ -230,7 +231,17 @@ $field_value = function ($field, $default = '') use ($is_editing_quote, $editing
         <div class="ofqb-actions">
             <button type="submit" name="ofqb_submit_intent" value="generate" class="ofqb-button">Generate Quote</button>
             <button type="submit" name="ofqb_submit_intent" value="draft" class="ofqb-button ofqb-button--secondary" formnovalidate>Save as Draft</button>
-            <a class="ofqb-button ofqb-button--secondary" href="<?php echo esc_url($base_url); ?>">Home</a>
+            <a class="ofqb-button ofqb-button--danger" href="<?php echo esc_url($base_url); ?>" data-ofqb-safe-leave>Cancel</a>
+            <a class="ofqb-button ofqb-button--secondary" href="<?php echo esc_url($base_url); ?>" data-ofqb-safe-leave>Home</a>
         </div>
+
+        <aside class="ofqb-readiness" data-ofqb-readiness aria-live="polite">
+            <div class="ofqb-readiness__heading">
+                <strong>Quote Readiness</strong>
+            </div>
+            <ul data-ofqb-readiness-list>
+                <li>Start filling out the quote to see what is needed.</li>
+            </ul>
+        </aside>
     </form>
 </div>
