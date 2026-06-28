@@ -1064,6 +1064,16 @@
         grid-template-columns: 1fr;
     }
 
+    .ofqb-preview-wrap {
+        overflow-x: auto;
+        padding-bottom: 8px;
+    }
+
+    .ofqb-quote-preview {
+        max-width: none;
+        width: 612px;
+    }
+
     .ofqb-quote-table,
     .ofqb-quote-table thead,
     .ofqb-quote-table tbody,

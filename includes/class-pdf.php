@@ -99,23 +99,23 @@ class OFQB_PDF
         $line = array(30, 30, 30);
         $left = 54;
         $right = 558;
-        $bottom_limit = 690;
+        $bottom_limit = 712;
         $table_width = $right - $left;
 
         $quote_creator = !empty($quote->created_by_user_id) ? get_userdata((int) $quote->created_by_user_id) : null;
         $quote_creator_email = $quote_creator && $quote_creator->user_email ? $quote_creator->user_email : $quote->salesperson_email;
 
         $add_footer = function () use ($pdf, $blue, $green, $left, $right, &$content, &$links) {
-            $footer_y = 722;
-            $content .= $pdf->rect(0, $footer_y, 612, 42, $blue, null);
-            $content .= $pdf->text('Email', $left + 24, $footer_y + 17, 7, 'B', $green);
-            $content .= $pdf->text('Sales@OdorFreeRestoration.com', $left + 24, $footer_y + 28, 7, 'F1', array(255, 255, 255));
-            $content .= $pdf->text('Phone', $left + 228, $footer_y + 17, 7, 'B', $green);
-            $content .= $pdf->text('866-4-NO-ODOR (466-6367)', $left + 228, $footer_y + 28, 7, 'F1', array(255, 255, 255));
-            $content .= $pdf->text('ODOR-FREE', $right - 96, $footer_y + 17, 9, 'B', $green);
-            $content .= $pdf->text('RESTORATION LLC', $right - 112, $footer_y + 30, 9, 'B', array(255, 255, 255));
-            $links[] = array('x' => $left + 20, 'y' => $footer_y + 6, 'w' => 145, 'h' => 30, 'url' => 'mailto:sales@odorfreerestoration.com');
-            $links[] = array('x' => $left + 224, 'y' => $footer_y + 6, 'w' => 140, 'h' => 30, 'url' => 'tel:18664666367');
+            $footer_y = 734;
+            $content .= $pdf->rect(0, $footer_y, 612, 34, $blue, null);
+            $content .= $pdf->text('Email', $left + 24, $footer_y + 14, 6.5, 'B', $green);
+            $content .= $pdf->text('Sales@OdorFreeRestoration.com', $left + 24, $footer_y + 24, 6.5, 'F1', array(255, 255, 255));
+            $content .= $pdf->text('Phone', $left + 228, $footer_y + 14, 6.5, 'B', $green);
+            $content .= $pdf->text('866-4-NO-ODOR (466-6367)', $left + 228, $footer_y + 24, 6.5, 'F1', array(255, 255, 255));
+            $content .= $pdf->text('ODOR-FREE', $right - 96, $footer_y + 14, 8.5, 'B', $green);
+            $content .= $pdf->text('RESTORATION LLC', $right - 112, $footer_y + 26, 8.5, 'B', array(255, 255, 255));
+            $links[] = array('x' => $left + 20, 'y' => $footer_y + 4, 'w' => 145, 'h' => 26, 'url' => 'mailto:sales@odorfreerestoration.com');
+            $links[] = array('x' => $left + 224, 'y' => $footer_y + 4, 'w' => 140, 'h' => 26, 'url' => 'tel:18664666367');
         };
 
         $finish_page = function () use (&$pages, &$content, &$fields, &$links, $add_footer) {
@@ -146,6 +146,14 @@ class OFQB_PDF
             $draw_header(true);
 
             return 136;
+        };
+
+        $ensure_space = function ($y, $needed_height) use ($bottom_limit, $new_content_page) {
+            if ($y + $needed_height > $bottom_limit) {
+                return $new_content_page();
+            }
+
+            return $y;
         };
 
         $draw_meta = function () use ($pdf, $quote, $quote_creator_email, $left, &$content) {
@@ -187,7 +195,9 @@ class OFQB_PDF
         };
 
         $draw_table_header = function ($title, $headers, $widths, $y) use ($pdf, $left, $table_width, $light_blue, $blue, &$content) {
-            $content .= $pdf->rect($left, $y, $table_width, 24, $light_blue, array(18, 166, 204));
+            $content .= $pdf->rect($left, $y, $table_width, 24, $light_blue, null);
+            $content .= $pdf->line_color($left, $y, $left + $table_width, $y, array(18, 166, 204));
+            $content .= $pdf->line_color($left, $y + 24, $left + $table_width, $y + 24, array(18, 166, 204));
             $x = $left;
 
             foreach ($headers as $index => $header) {
@@ -244,17 +254,20 @@ class OFQB_PDF
         $y = $draw_rows($services, 'service', $y);
         $y = $draw_rows($materials, 'material', $y);
 
-        $terms_lines = $pdf->wrap_lines_for_width($quote->terms, 270, 8);
-        $terms_height = max(86, 28 + (min(9, count($terms_lines)) * 10));
-
-        if ($y + $terms_height + 92 > $bottom_limit) {
-            $y = $new_content_page();
-        }
+        $pdf_terms = trim(str_replace("Prefilled standard terms can be edited for each client.\n\n", '', (string) $quote->terms));
+        $pdf_terms = trim(str_replace('Prefilled standard terms can be edited for each client.', '', $pdf_terms));
+        $terms_lines = $pdf->wrap_lines_for_width($pdf_terms, 270, 8);
+        $terms_height = max(72, 26 + (min(7, count($terms_lines)) * 10));
+        $totals_height = 84;
+        $approval_height = 76;
+        $approval_gap = 18;
+        $terms_block_height = max($terms_height, $totals_height + 12);
+        $y = $ensure_space($y, $terms_block_height + $approval_gap + $approval_height);
 
         $content .= $pdf->line($left, $y, $right, $y);
         $terms_y = $y + 22;
         $content .= $pdf->text('Terms and Conditions:', $left, $terms_y, 8, 'B', $blue);
-        $content .= $pdf->wrapped_text($quote->terms, $left, $terms_y + 12, 270, 8, 10, 'F1', array(0, 0, 0), 9);
+        $content .= $pdf->wrapped_text($pdf_terms, $left, $terms_y + 12, 270, 8, 10, 'F1', array(0, 0, 0), 7);
 
         $totals_x = 350;
         $totals_y = $y + 16;
@@ -268,11 +281,8 @@ class OFQB_PDF
         $content .= $pdf->text(rtrim(rtrim(number_format((float) $quote->tax_rate, 2, '.', ''), '0'), '.') . '%', $totals_x + 142, $totals_y + 45, 8, 'B');
         $content .= $pdf->text(OFQB_Quotes::money($quote->total), $totals_x + 142, $totals_y + 73, 8, 'B', $green);
 
-        $approval_y = max($y + $terms_height, $totals_y + 102);
-
-        if ($approval_y + 74 > $bottom_limit) {
-            $approval_y = $new_content_page();
-        }
+        $approval_y = max($y + $terms_block_height + $approval_gap, $totals_y + 94);
+        $approval_y = $ensure_space($approval_y, $approval_height);
 
         $content .= $pdf->rect($left, $approval_y, $table_width, 76, null, $line);
         $content .= $pdf->text('Approval:', $left + 16, $approval_y + 22, 13, 'F1', $blue);
@@ -437,6 +447,11 @@ class OFQB_Simple_PDF
     public function line($x1, $y1, $x2, $y2)
     {
         return sprintf("0 0 0 RG %0.2F %0.2F m %0.2F %0.2F l S\n", $x1, 792 - $y1, $x2, 792 - $y2);
+    }
+
+    public function line_color($x1, $y1, $x2, $y2, $color = array(0, 0, 0))
+    {
+        return $this->color($color, true) . sprintf("%0.2F %0.2F m %0.2F %0.2F l S\n", $x1, 792 - $y1, $x2, 792 - $y2);
     }
 
     public function text($text, $x, $y, $size = 8, $font = 'F1', $color = array(0, 0, 0))
