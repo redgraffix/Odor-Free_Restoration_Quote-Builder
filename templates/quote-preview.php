@@ -9,6 +9,7 @@ $quote_creator_email = $quote_creator && $quote_creator->user_email ? $quote_cre
 $can_modify_quote = OFQB_Quotes::current_user_can_modify_quote($saved_quote);
 $quote_header_path = OFQB_PLUGIN_DIR . 'assets/images/quote-header.jpg';
 $quote_header_version = file_exists($quote_header_path) ? filemtime($quote_header_path) : OFQB_VERSION;
+$preview_terms = trim(str_replace("Prefilled standard terms can be edited for each client.\n\n", '', (string) $saved_quote->terms));
 ?>
 
 <div class="odorfree-quote-builder" data-ofqb>
@@ -120,7 +121,7 @@ $quote_header_version = file_exists($quote_header_path) ? filemtime($quote_heade
             <section class="ofqb-preview-bottom">
                 <div class="ofqb-preview-terms">
                     <p><strong>Terms and Conditions:</strong></p>
-                    <p><?php echo nl2br(esc_html($saved_quote->terms)); ?></p>
+                    <p><?php echo nl2br(esc_html($preview_terms)); ?></p>
                 </div>
                 <div class="ofqb-preview-totals">
                     <div><span>Subtotal</span><strong><?php echo esc_html(OFQB_Quotes::money($saved_quote->subtotal)); ?></strong></div>
@@ -134,6 +135,21 @@ $quote_header_version = file_exists($quote_header_path) ? filemtime($quote_heade
                 <div><span>Approved By:</span><i></i></div>
                 <div class="ofqb-preview-approval-split"><span>Signature:</span><i></i><span>Date:</span><i></i></div>
             </section>
+
+            <footer class="ofqb-preview-footer">
+                <a href="mailto:sales@odorfreerestoration.com">
+                    <img src="<?php echo esc_url(OFQB_PLUGIN_URL . 'assets/images/icon-phone.svg'); ?>" alt="">
+                    <span><strong>Email</strong>Sales@OdorFreeRestoration.com</span>
+                </a>
+                <a href="tel:18664666367">
+                    <img src="<?php echo esc_url(OFQB_PLUGIN_URL . 'assets/images/icon-globe.svg'); ?>" alt="">
+                    <span><strong>Phone</strong>866-4-NO-ODOR (466-6367)</span>
+                </a>
+                <div class="ofqb-footer-brand">
+                    <strong>ODOR-FREE</strong>
+                    <span>RESTORATION LLC</span>
+                </div>
+            </footer>
         </article>
     </div>
 

@@ -164,7 +164,7 @@ class OFQB_Quotes
 
     public static function get_default_terms()
     {
-        return "Prefilled standard terms can be edited for each client.\n\nAcceptance of this quote authorizes Odor-Free Restoration LLC to perform the listed services and supply the listed materials.";
+        return "Acceptance of this quote authorizes Odor-Free Restoration LLC to perform the listed services and supply the listed materials.";
     }
 
     public static function get_quote_email_bcc()
