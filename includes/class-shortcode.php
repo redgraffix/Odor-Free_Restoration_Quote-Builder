@@ -46,6 +46,67 @@ class OFQB_Shortcode
         $current_user = wp_get_current_user();
         $salesperson_name = $current_user->display_name ? $current_user->display_name : $current_user->user_login;
         $base_url = remove_query_arg(array('ofqb_view', 'ofqb_quote_id', 'ofqb_mode', 'ofqb_page', 'ofqb_search', 'ofqb_sort', 'ofqb_order', 'ofqb_created_by'));
+        $submission_result = OFQB_Quotes::maybe_handle_submission();
+
+        if ($submission_result && !is_wp_error($submission_result)) {
+            $saved_quote = $submission_result['quote'];
+            $saved_services = $submission_result['services'];
+            $saved_materials = $submission_result['materials'];
+            $show_saved_notice = true;
+
+            if ('draft' === $saved_quote->status) {
+                $editing_quote = $saved_quote;
+                $editing_services = $saved_services;
+                $editing_materials = $saved_materials;
+                $quote_action_notice = 'Draft ' . $saved_quote->quote_number . ' was saved.';
+                $quote_error = '';
+
+                ob_start();
+                include OFQB_PLUGIN_DIR . 'templates/quote-form.php';
+                return ob_get_clean();
+            }
+
+            ob_start();
+            include OFQB_PLUGIN_DIR . 'templates/quote-preview.php';
+            return ob_get_clean();
+        }
+
+        if (!empty($_GET['ofqb_quote_id'])) {
+            $quote_id = absint(wp_unslash($_GET['ofqb_quote_id']));
+            $quote_action_result = OFQB_Quotes::maybe_handle_quote_action($quote_id);
+            $quote_action_error = is_wp_error($quote_action_result) ? $quote_action_result->get_error_message() : '';
+            $quote_action_notice = true === $quote_action_result ? 'Quote was updated.' : '';
+            $loaded_quote = OFQB_Quotes::get_quote_with_items($quote_id);
+
+            if ($loaded_quote) {
+                $saved_quote = $loaded_quote['quote'];
+                $saved_services = $loaded_quote['services'];
+                $saved_materials = $loaded_quote['materials'];
+
+                if (!OFQB_Quotes::current_user_can_modify_quote($saved_quote)) {
+                    return '<div class="odorfree-quote-builder odorfree-quote-builder--notice">You can only view quotes you created.</div>';
+                }
+
+                $should_edit_quote = (!empty($_GET['ofqb_mode']) && 'revise' === sanitize_text_field(wp_unslash($_GET['ofqb_mode']))) || 'draft' === $saved_quote->status;
+
+                if ($should_edit_quote) {
+                    $editing_quote = $saved_quote;
+                    $editing_services = $saved_services;
+                    $editing_materials = $saved_materials;
+                    $quote_error = is_wp_error($submission_result) ? $submission_result->get_error_message() : '';
+
+                    ob_start();
+                    include OFQB_PLUGIN_DIR . 'templates/quote-form.php';
+                    return ob_get_clean();
+                }
+
+                ob_start();
+                include OFQB_PLUGIN_DIR . 'templates/quote-preview.php';
+                return ob_get_clean();
+            }
+        }
+
+        $quote_error = is_wp_error($submission_result) ? $submission_result->get_error_message() : '';
         $quote_view = !empty($_GET['ofqb_view']) ? sanitize_text_field(wp_unslash($_GET['ofqb_view'])) : 'home';
 
         if ('create' === $quote_view) {
@@ -55,13 +116,20 @@ class OFQB_Shortcode
         }
 
         if ('search' === $quote_view) {
+            $quotes_for_table = OFQB_Quotes::get_quote_list(array(
+                'search' => !empty($_GET['ofqb_search']) ? sanitize_text_field(wp_unslash($_GET['ofqb_search'])) : '',
+                'limit' => 100,
+            ));
             ob_start();
             include OFQB_PLUGIN_DIR . 'templates/quote-search-placeholder.php';
             return ob_get_clean();
         }
 
         if ('mine' === $quote_view) {
-            $recent_quotes = OFQB_Quotes::get_recent_quotes(20);
+            $quotes_for_table = OFQB_Quotes::get_quote_list(array(
+                'created_by_user_id' => get_current_user_id(),
+                'limit' => 100,
+            ));
             ob_start();
             include OFQB_PLUGIN_DIR . 'templates/my-quotes-placeholder.php';
             return ob_get_clean();

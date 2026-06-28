@@ -48,33 +48,11 @@ if (!defined('ABSPATH')) {
             <?php if (empty($recent_quotes)) : ?>
                 <div class="ofqb-empty-state">
                     <strong>No quotes yet</strong>
-                    <p>The quote form and PDF workflow will build on this registered plugin foundation.</p>
+                    <p>Create a quote and it will appear here.</p>
                 </div>
             <?php else : ?>
-                <div class="ofqb-table-wrap">
-                    <table class="ofqb-quote-table">
-                        <thead>
-                            <tr>
-                                <th>Quote</th>
-                                <th>Client</th>
-                                <th>Status</th>
-                                <th>Total</th>
-                                <th>Updated</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($recent_quotes as $quote) : ?>
-                                <tr>
-                                    <td data-label="Quote"><?php echo esc_html($quote->quote_number); ?></td>
-                                    <td data-label="Client"><?php echo esc_html($quote->customer_company ? $quote->customer_company : $quote->customer_name); ?></td>
-                                    <td data-label="Status"><span class="ofqb-status-pill ofqb-status-pill--<?php echo esc_attr($quote->status); ?>"><?php echo esc_html(ucwords(str_replace('_', ' ', $quote->status))); ?></span></td>
-                                    <td data-label="Total"><?php echo esc_html(function_exists('wp_strip_all_tags') ? '$' . number_format((float) $quote->total, 2) : $quote->total); ?></td>
-                                    <td data-label="Updated"><?php echo esc_html(date_i18n(get_option('date_format'), strtotime($quote->updated_at))); ?></td>
-                                </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
-                </div>
+                <?php $quotes_for_table = $recent_quotes; ?>
+                <?php include OFQB_PLUGIN_DIR . 'templates/quote-table.php'; ?>
             <?php endif; ?>
         </section>
     </section>

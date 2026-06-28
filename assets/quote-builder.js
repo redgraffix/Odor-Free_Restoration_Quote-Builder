@@ -170,6 +170,7 @@
             var serviceButton = event.target.closest('[data-ofqb-add-service]');
             var materialButton = event.target.closest('[data-ofqb-add-material]');
             var removeButton = event.target.closest('[data-ofqb-remove-row]');
+            var printButton = event.target.closest('[data-ofqb-print-quote]');
 
             if (serviceButton) {
                 event.preventDefault();
@@ -184,6 +185,11 @@
             if (removeButton) {
                 event.preventDefault();
                 removeRow(builder, removeButton.closest('tr'));
+            }
+
+            if (printButton) {
+                event.preventDefault();
+                window.print();
             }
         });
 
